@@ -1,0 +1,222 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% University Assignment Title Page 
+% LaTeX Template
+% Version 1.0 (27/12/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% WikiBooks (http://en.wikibooks.org/wiki/LaTeX/Title_Creation)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+% 
+% Instructions for using this template:
+% This title page is capable of being compiled as is. This is not useful for 
+% including it in another document. To do this, you have two options: 
+%
+% 1) Copy/paste everything between \begin{document} and \end{document} 
+% starting at \begin{titlepage} and paste this into another LaTeX file where you 
+% want your title page.
+% OR
+% 2) Remove everything outside the \begin{titlepage} and \end{titlepage} and 
+% move this file to the same directory as the LaTeX file you wish to add it to. 
+% Then add \input{./title_page_1.tex} to your LaTeX file where you want your
+% title page.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{parselines}
+\usepackage[portuguese]{babel}
+\usepackage{graphicx}
+\usepackage[document]{ragged2e}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[margin=0.8in]{geometry}		
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{url}
+
+\graphicspath{ {images/} }
+
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\begin{document}
+
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{1mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%----------------------------------------------------------------------------------------
+%	HEADING SECTIONS
+%----------------------------------------------------------------------------------------
+
+\includegraphics{feup.jpg}
+
+\textsc{\large Agentes e Inteligência Artificial Distribuída}\\[0.8cm] % Major heading such as course name
+\textsc{\large 4º ano do Mestrado Integrado em Engenharia Informática e Computação}\\[0.8cm] % Minor heading such as course title
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\HRule \\[1.2cm]
+{ \huge \bfseries Simulação dinâmica da gestão de AGVs num contexto fabril}\\[0.6cm] % Title of your document
+\HRule \\[3cm]
+ 
+%----------------------------------------------------------------------------------------
+%	AUTHOR SECTION
+%----------------------------------------------------------------------------------------
+
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+\Large \emph{Authors:}\\[0.5cm] \normalsize
+Daniel \textsc{Reis}\\[0.1cm] - up201308586 
+- up201308586@fe.up.pt\\[0.1cm]
+David \textsc{Baião}\\[0.1cm] - up201305195
+- up201305195@fe.up.pt\\[0.1cm] 
+Filipa \textsc{Ramos}\\[0.1cm] - up201305378
+- up201305378@fe.up.pt\\[3cm] % Your name
+
+%----------------------------------------------------------------------------------------
+%	DATE SECTION
+%----------------------------------------------------------------------------------------
+
+{\large \today}\\[0cm] % Date, change the \today to a set date if you want to be precise
+
+%----------------------------------------------------------------------------------------
+%	TABLE OF CONTENTS & LISTS OF FIGURES AND TABLES
+%----------------------------------------------------------------------------------------
+
+\tableofcontents
+
+%----------------------------------------------------------------------------------------
+%	INTRODUÇÃO
+%----------------------------------------------------------------------------------------
+
+\section{Introdução} 
+
+\justify\normalsize
+No âmbito da unidade curricular de Agentes e Inteligência Artificial Distribuída pretende-se simular as operações de uma fábrica que utiliza AGVs para transporte de peças entre máquinas nas variadas fases de produção. Serão utilizadas plataformas de sistema e/ou frameworks na construção e simulação de agentes. O objectivo é manusear estas ferramentas por forma a auxiliar a construção de um sistema multiagente que permite comunicação e negociação entre agentes. Tem-se em vista a exploração das possibilidades destas plataformas atraves da construção de agentes com funções diferentes que se complementam uns aos outros e formam uma unidade de produção fabril.
+
+Este projecto tem como objectivo principal a demonstração de possíveis aplicações de agentes de inteligência artificial no mundo prático. Unidades de produção como a que este projecto envisiona poderão ser uma realidade num futuro proximo e permitirão uma subida exponencial na eficiência e na organização de fabricas de produção em massa.
+
+%----------------------------------------------------------------------------------------
+
+\newpage % Start the article content on the second page, remove this if you have a longer abstract that goes onto the second page
+
+%----------------------------------------------------------------------------------------
+%	ESPECIFICAÇÃO
+%----------------------------------------------------------------------------------------
+
+\section{Descrição do cenário}
+
+\subsection{Objectivos}
+\justify\normalsize
+
+
+\subsection{Resultados esperados}
+\justify\normalsize
+
+\subsection{Avaliação dos resultados}
+\justify\normalsize 
+
+
+%----------------------------------------------------------------------------------------
+%	JADE, REPAST+SaJas
+%----------------------------------------------------------------------------------------
+
+\subsection{Explicação das plataformas a usar}
+
+\subsubsection{Características principais}
+
+\subsubsection{Funcionalidades Relevantes}
+
+%----------------------------------------------------------------------------------------
+%	Agentes
+%----------------------------------------------------------------------------------------
+
+\subsection{Sistema}
+
+\subsubsection{Identificação e caracterização dos agentes}
+
+\subsubsection{Interação entre agentes}
+
+\subsubsection{Faseamento}
+
+
+\section{Conclusões}
+\justify\normalsize
+
+
+\bibliography{title_page_1}
+\bibliographystyle{plain}
+
+\end{titlepage}
+\end{document}
