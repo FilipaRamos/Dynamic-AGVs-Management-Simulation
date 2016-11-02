@@ -51,6 +51,7 @@
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{pgfplots}
+\usepackage{animate}
 
 \pgfplotsset{compat=1.5}
 \graphicspath{ {images/} }
@@ -256,8 +257,8 @@ No início, cada lote tem uma máquina da fase 1 aleatoriamente assignada de aco
 No processo de decisão sao tidas em conta as variáveis de cada máquina. Cada máquina é caracterizada por:
 
 \begin{description}
-\item[Capacidade de Processamento] -  Número inteiro de lotes que a máquina consegue processar ao mesmo tempo;
-\item[Velocidade de Processamento] - Inteiro que avalia a velocidade com que a máquina processa um lote;
+\item[Capacidade de processamento] -  Número inteiro de lotes que a máquina consegue processar ao mesmo tempo;
+\item[Velocidade de processamento] - Inteiro que avalia a velocidade com que a máquina processa um lote;
 \item[Manutenção] - Booleano que indica se a máquina está operacional ou em manutenção;
 \item[Localização] - Coordenadas da localização fixa da máquina.
 \end{description}
@@ -315,33 +316,89 @@ Quanto menor o grau de potencial melhor é a opção. Assim, uma máquina escolh
   ] 
     \addplot[draw=blue][domain=0:5]{x};
   \end{axis}\end{tikzpicture}
+  
+  O grau de potencial impede que uma máquina com maior capacidade e velocidade seja sobrecarregada com lotes para processar enquanto que as outras permanecem desocupadas.
 
 \subsubsection{AGV}
 
-Os AGV's (\textit{Automated Guided Vehicles}) vão estar espalhados pelo espaço físico da loja, navegando pelo sistema para os sítios onde são necessários. Efetuam negociações diretas com as máquinas que requerem transporte. Todos os AGV's conhecem as localizações de todas as máquinas desde o início da simulação. 
+Os AGV's (\textit{Automated Guided Vehicles}) vão estar espalhados pelo espaço físico da fábrica, navegando pelo sistema para os sítios onde são necessários. Efetuam negociações diretas com as máquinas que requerem transporte. Todos os AGV's conhecem as localizações de todas as máquinas desde o início da simulação.\newline
+
+A estação de carregamento de AGV é uma posição física no espaço fabril onde os drones vão para recarregarem a sua bateria. Após um tempo de carregamento no qual o drone está parado na estação, a sua autonomia volta ao valor máximo. Enquanto este se encontra na estação, está indisponível para fazer entregas. Um AGV apenas pode ir à estação recarregar quando não puder fazer qualquer outro deslocamento sem ficar sem bateria.\newline
 
 As variáveis que cada AGV tem de ter em conta são as expressadas a seguir:
 
 \begin{description}
 \item[Capacidade de carga] - Número de lotes que um AGV consegue carregar;
 \item[Autonomia] - Quantidade de bateria ainda disponível;
-\item[Localização] - Coordenadas da localização do AGV em cada momento.
+\item[Localização] - Coordenadas da localização do AGV em cada momento;
+\item[Queue de pedidos] - Queue com os pedidos assignados ao AGV em questão.
 \end{description}
+
+A queue de um AGV guarda por ordem os pedidos de transporte que lhe foram atribuídos. Um pedido tem maior prioridade porque foi requerido primeiro. Ao receber um pedido, um AGV analisa primeiro se a sua carga atual ainda lhe permite adicionar a carga pedida. Se pode suportar a carga, então o AGV responde à máquina requerente com o custo total de cumprir o pedido tendo em conta que os pedidos da queue têm maior prioridade. O cálculo do custo é feito através da fórmula \ref{eqCusto}.
+
+\begin{equation}
+C = \frac{A-d_{T}}{nr_{pedidos}}
+\label{eqCusto}
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Variáveis presentes na equação \ref{eqCusto}.}
+\label{my-label}
+\begin{tabular}{@{}p{2cm}ll@{}}
+\toprule
+\multicolumn{1}{c}{\textbf{Variável}} & \textbf{Definição}   & \multicolumn{1}{c}{\textbf{Unidades}} \\ \midrule
+\multicolumn{1}{c}{$C$} & Custo &  \multicolumn{1}{c}{-}  \\ \midrule
+\multicolumn{1}{c}{$A$} & Autonomia do AGV no momento da receção do pedido &  \multicolumn{1}{c}{-}  \\ \midrule
+\multicolumn{1}{c}{$d_{T}$} & Distância total percorrida pelo AGV   & \multicolumn{1}{c}{$m$} \\ \midrule
+\multicolumn{1}{c}{$d_{e}$} & Distância desde o último ponto do trajecto até à estação de carregamento & \multicolumn{1}{c}{$m$} \\ \midrule
+\multicolumn{1}{c}{$nr_{pedidos}$} & Número de pedidos satisfazidos pelo AGV  & \multicolumn{1}{c}{-} \\ \bottomrule
+\end{tabular}
+\end{table}
+
+Um pedido é impossível de ser satisfeito por um AGV se $A-d_{T} < d_{e}$. Caso $A-d_{T} >= d_{e}$, o pedido é válido. O AGV faz o cálculo do custo para todos os trajetos possíveis tendo em conta os pedidos da queue e os novos pedidos. O objectivo é maximizar o número de pedidos satisfazidos e minimizar o custo total. Assim, o custo comunicado à máquina que requere o transporte é o menor encontrado pelo AGV que satisfaz esse pedido. A máquina escolhe o AGV que lhe comunicar o menor custo de todos.
+
+\paragraph{Movimento no sentido negativo}
+
+Pode acontecer o caso de um AGV receber um pedido de uma máquina que se encontra numa posição que implique ao mesmo andar para um lado contrário ao que ele se dirigia. Um AGV avalia apenas a possibilidade de andar no sentido negativo se a localização da máquina se encontrar dentro de um raio com diâmetro igual à distância entre o AGV e o próximo destino na sua queue.\newline
+
+\textbf{FAZER GIF PARA EXPLICAR ISTO}
+
+\iffalse
+package{animate} \animategraphics{12}{foo-}{0}{18} nomes dos ficheiros foo-01.png, etc...
+\fi
 
 \subsection{Objectivos}
 \justify\normalsize
-O maior objectivo inerente a esta simulação é o de verificar a possibilidade de automação de uma unidade fabril por forma a diminuir a interação humana o mínimo possivel e visando obter a maior eficiência possivel na produção. Do ponto de vista da aplicação de agentes o ponto mais evidente é a observação da comunicação e do comportamento de e entre agentes máquina e AGV. 
+O maior objectivo inerente a esta simulação é o de verificar a possibilidade de automação de uma unidade fabril por forma a diminuir a interação humana o mínimo possivel e visando obter a maior eficiência possivel na produção. Do ponto de vista da aplicação de agentes o ponto mais evidente é a observação da comunicação e do comportamento de e entre agentes máquina e AGV. Para além disto, um dos objectivos é a aplicação dos protocolos de negociação abordados na unidade curricular.
 
-Será assumido na simulação que é do interesse da fábrica obter a maior eficiência possível na sua linha de produção. Isto significa que todas as escolhas de agentes terão em vista obter 
-
-
-\subsection{Resultados esperados}
-\justify\normalsize
-É suposto o programa ficar funcional na data de entrega, logo o resultado esperado é isto estar pronto.
+Será assumido na simulação que é do interesse da fábrica obter a maior eficiência possível na sua linha de produção. Isto significa que todas as escolhas de agentes terão em vista obter uma maior produtividade.
 
 \subsection{Avaliação dos resultados}
 \justify\normalsize
-20/20
+Os resultados serão avaliados através da construção de estatísticas das seguintes variáveis:
+
+\begin{enumerate}
+\item Tempo médio de processamento dos lotes\footnote{Um lote é considerado processado depois de ter passado por todas as fases de produção.};
+\item Intervalo médio de negociação máquina-máquina;
+\item Intervalo médio de negociação máquina-AGV;
+\item Número de lotes processados dentro do tempo limite.
+\end{enumerate}
+
+Pretende-se comparar cenários com elevado número de máquinas e AGV's contra reduzido número dos mesmos. Pretende-se também testar cenários com variadas máquinas da mesma fase com capacidade e velocidade de processamento totalmente diferentes. Um cenário a explorar será um com opções de máquinas da mesma fase com elevada capacidade e reduzida velocidade e vice-versa.
+
+Pretende-se ainda fazer uma análise comparativa entre cenários da quantidade de lotes processados num determinado intervalo de tempo estabelecido.
+
+\subsection{Resultados esperados}
+\justify\normalsize
+Espera-se que o sistema tenha uma boa performance para situações baseadas no mundo real (unidades de produção médias e grandes). Antecipa-se que o intervalo de negociação máquina-AGV seja maior do que o tempo de negociação máquina-máquina devido à necessidade de cálculo de todos os caminhos possíveis.
+
+Espera-se que em certos cenários a execução se torne mais lenta. Considera-se que os fatores que mais podem influenciar o tempo de execução são os seguintes:
+
+\begin{enumerate}
+\item Número exagerado de máquinas e de AGV's no cenário;
+\item Grande afluência de pedidos praticamente ou totalmente simultâneos.
+\end{enumerate}
 
 
 %----------------------------------------------------------------------------------------
@@ -372,22 +429,16 @@ Máquinas e AGV's. As máquinas processam lotes e os AGV tratam do transporte de
 As máquinas processam os lotes/peças e comunicam com as outras máquinas a próxima fase. Após decidirem qual deverá ser a próxima máquina a processar as peças devem comunicar com os AGV disponíveis o transporte entre a máquina atual e a seguinte no processo.
 
 \subsection{Faseamento}
-\textbf{FASEAMENTO NÃO É ISTO! É AS FASES DE DESENVOLVIMENTO DO PROJETO!}
+Prevê-se que o projeto seja desenvolvido segundo as fases especificadas em baixo.
 
-
-Fase 1- Processamento de lote/peças por uma máquina (máquina de origem).
-\newline
-Fase 2- Determinação da máquina responsável pela etapa seguinte.
-\newline
-Fase 3- Negociamento de transporte entre a máquina de origem e a máquina responsável pela etapa seguinte.
-\newline
-Fase 4- Comunicação entre máquinas e AGV para efetuar transporte entre máquina de origem e máquina seguinte.
-\newline
-Fase 5- Transporte efetuado pelas AGV entre máquinas.
-\newline
-Fase 6- Jump to Fase 1.
-
-
+\begin{enumerate}
+\item Desenvolvimento dos agentes máquina;
+\item Implementação do protocolo de negociação máquina-máquina;
+\item Desenvolvimento dos agentes AGV;
+\item Implementação do protocolo de negociação máquina-AGV;
+\item Simulação de variados cenários;
+\item Avaliação e comparação estatística dos resultados.
+\end{enumerate}
 
 \section{Conclusões}
 \justify\normalsize
