@@ -47,8 +47,45 @@
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{float}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{pgfplots}
 
+\pgfplotsset{compat=1.5}
 \graphicspath{ {images/} }
+
+\titleclass{\subsubsubsection}{straight}[\subsection]
+
+\newcounter{subsubsubsection}[subsubsection]
+\renewcommand\thesubsubsubsection{\thesubsubsection.\arabic{subsubsubsection}}
+\renewcommand\theparagraph{\thesubsubsubsection.\arabic{paragraph}} % optional; useful if paragraphs are to be numbered
+
+\titleformat{\subsubsubsection}
+  {\normalfont\normalsize\bfseries}{\thesubsubsubsection}{1em}{}
+\titlespacing*{\subsubsubsection}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+\makeatletter
+\renewcommand\paragraph{\@startsection{paragraph}{5}{\z@}%
+  {3.25ex \@plus1ex \@minus.2ex}%
+  {-1em}%
+  {\normalfont\normalsize\bfseries}}
+\renewcommand\subparagraph{\@startsection{subparagraph}{6}{\parindent}%
+  {3.25ex \@plus1ex \@minus .2ex}%
+  {-1em}%
+  {\normalfont\normalsize\bfseries}}
+\def\toclevel@subsubsubsection{4}
+\def\toclevel@paragraph{5}
+\def\toclevel@paragraph{6}
+\def\l@subsubsubsection{\@dottedtocline{4}{7em}{4em}}
+\def\l@paragraph{\@dottedtocline{5}{10em}{5em}}
+\def\l@subparagraph{\@dottedtocline{6}{14em}{6em}}
+\makeatother
+
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+
 
 \colorlet{punct}{red!60!black}
 \definecolor{background}{HTML}{EEEEEE}
@@ -201,9 +238,13 @@ Este cenário é constituído por:
 
 A negociação entre máquinas é feita na passagem da fase 1 para a fase 2 e da fase 2 para a fase 3. Os círculos vermelhos simbolizam AGV's em diferentes posições do espaço físico da fábrica. A negociação pelo transporte de um AGV implica a análise por parte do agente da distância do AGV à máquina origem e destino. O quadrado presente na parte inferior do esquema representa a estação de carregamento de um AGV. Este não é um agente. É apenas a localização referência para onde os AGV's se deslocam por forma a voltarem a encher a sua bateria.
 
+Para efeitos de transporte por parte de um AGV será considerado que todas as peças de todos os lotes têm o mesmo peso (todos os lotes são compostos por peças iguais).
+
+O espaço físico da unidade fabril está mapeada em coordenadas (\textit{xy}) que auxiliam à localização de todos os elementos do sistema.
+
 \subsubsection{Máquinas}
 
-No início, cada lote tem uma máquina da fase 1 assignada de acordo com a capacidade de cada máquina. Para o caso da fábrica do exemplo da figura \ref{scenario}, as decisões a serem tomadas por cada máquina estão representadas na figura \ref{decisionMach}.
+No início, cada lote tem uma máquina da fase 1 aleatoriamente assignada de acordo com a capacidade de cada máquina. Para o caso da fábrica do exemplo da figura \ref{scenario}, as decisões a serem tomadas por cada máquina estão representadas na figura \ref{decisionMach}.
 
 \begin{figure}[H]
   \raggedleft 
@@ -217,14 +258,75 @@ No processo de decisão sao tidas em conta as variáveis de cada máquina. Cada 
 \begin{description}
 \item[Capacidade de Processamento] -  Número inteiro de lotes que a máquina consegue processar ao mesmo tempo;
 \item[Velocidade de Processamento] - Inteiro que avalia a velocidade com que a máquina processa um lote;
-\item[Manutenção] - Booleano que indica se a máquina está operacional ou em manutenção.
-\item
+\item[Manutenção] - Booleano que indica se a máquina está operacional ou em manutenção;
+\item[Localização] - Coordenadas da localização fixa da máquina.
 \end{description}
 
 Cada máquina pode continuar a receber lotes até que atinja a sua capacidade máxima de processamento. Todas estas variáveis são inerentes a uma máquina. Podem existir máquinas da mesma fase que não tenham as características iguais. A velocidade é a variável que auxilia ao cálculo do menor tempo em que os lotes são processados. Ao ser feita a escolha da máquina destino são tidos em conta tanto a capacidade de processamento como a velocidade de cada máquina por forma a obter a combinação que minimiza o tempo total de produção do lote.
 
+\subsubsubsection{Grau de Potencial}
+
+O \textbf{Grau de Potencial} de uma máquina expressa o equilíbrio entre as variáveis \textbf{capacidade de processamento} e \textbf{velocidade de processamento} e caracteriza-se pela fórmula seguinte:
+
+\begin{equation}
+G_{p}=\frac{1}{C_{p}}\times t_{p}
+\label{eqG}
+\end{equation}
+
+em que $t_{p}$ representa: 
+
+\begin{equation}
+t_{p}=\frac{1}{V_{p}}
+\label{eqT}
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Variáveis presentes nas equações \ref{eqG} e \ref{eqT}.}
+\label{my-label}
+\begin{tabular}{@{}p{2cm}ll@{}}
+\toprule
+\multicolumn{1}{c}{\textbf{Variável}} & \textbf{Definição}   & \multicolumn{1}{c}{\textbf{Unidades}} \\ \midrule
+\multicolumn{1}{c}{$G_{p}$} & Grau de potencial &  \multicolumn{1}{c}{-}  \\ \midrule
+\multicolumn{1}{c}{$C_{p}$} & Capacidade de processamento &  \multicolumn{1}{c}{-}  \\ \midrule
+\multicolumn{1}{c}{$t_{p}$} & Tempo de processamento      & \multicolumn{1}{c}{$s$} \\ \midrule
+\multicolumn{1}{c}{$V_{p}$} & Velocidade de processamento  & \multicolumn{1}{c}{$lotes/s$} \\ \bottomrule
+\end{tabular}
+\end{table}
+
+Quanto menor o grau de potencial melhor é a opção. Assim, uma máquina escolhe sempre a máquina da fase seguinte com menor grau de potencial. Um menor grau de potencial significa menor tempo de processamento de um lote e este é o objectivo da unidade fabril. Desta forma, o grau de potencial é inversamente proporcional à capacidade de processamento (observável em baixo) e diretamente proporcional ao tempo de processamento (declive da reta é igual a $C_{p}^{-1}$, observável em baixo).
+
+\begin{tikzpicture}
+\centering
+  \begin{axis}[ 
+    title=Variação do grau de potencial em relação à capacidade de processamento,
+    xlabel=$C_{p}$,
+    ylabel={$G_{p}$},
+  ] 
+    \addplot[draw=blue][domain=0:5]{1/x};
+  \end{axis}\end{tikzpicture}
+
+\begin{tikzpicture}
+\centering
+  \begin{axis}[ 
+    title=Variação do grau de potencial em relação ao tempo de processamento,
+    xlabel=$t_{p}$,
+    ylabel={$G_{p}$},
+  ] 
+    \addplot[draw=blue][domain=0:5]{x};
+  \end{axis}\end{tikzpicture}
+
 \subsubsection{AGV}
 
+Os AGV's (\textit{Automated Guided Vehicles}) vão estar espalhados pelo espaço físico da loja, navegando pelo sistema para os sítios onde são necessários. Efetuam negociações diretas com as máquinas que requerem transporte. Todos os AGV's conhecem as localizações de todas as máquinas desde o início da simulação. 
+
+As variáveis que cada AGV tem de ter em conta são as expressadas a seguir:
+
+\begin{description}
+\item[Capacidade de carga] - Número de lotes que um AGV consegue carregar;
+\item[Autonomia] - Quantidade de bateria ainda disponível;
+\item[Localização] - Coordenadas da localização do AGV em cada momento.
+\end{description}
 
 \subsection{Objectivos}
 \justify\normalsize
@@ -270,6 +372,9 @@ Máquinas e AGV's. As máquinas processam lotes e os AGV tratam do transporte de
 As máquinas processam os lotes/peças e comunicam com as outras máquinas a próxima fase. Após decidirem qual deverá ser a próxima máquina a processar as peças devem comunicar com os AGV disponíveis o transporte entre a máquina atual e a seguinte no processo.
 
 \subsection{Faseamento}
+\textbf{FASEAMENTO NÃO É ISTO! É AS FASES DE DESENVOLVIMENTO DO PROJETO!}
+
+
 Fase 1- Processamento de lote/peças por uma máquina (máquina de origem).
 \newline
 Fase 2- Determinação da máquina responsável pela etapa seguinte.
