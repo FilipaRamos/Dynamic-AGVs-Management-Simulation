@@ -52,6 +52,29 @@
 \usepackage{booktabs}
 \usepackage{pgfplots}
 \usepackage{animate}
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
 
 \pgfplotsset{compat=1.5}
 \graphicspath{ {images/} }
@@ -86,63 +109,6 @@
 
 \setcounter{secnumdepth}{4}
 \setcounter{tocdepth}{4}
-
-
-\colorlet{punct}{red!60!black}
-\definecolor{background}{HTML}{EEEEEE}
-\definecolor{delim}{RGB}{20,105,176}
-\colorlet{numb}{magenta!60!black}
-
-
-\lstdefinelanguage{json}{
-    basicstyle=\normalfont\ttfamily,
-    numbers=left,
-    numberstyle=\scriptsize,
-    stepnumber=1,
-    numbersep=8pt,
-    showstringspaces=false,
-    breaklines=true,
-    frame=lines,
-    backgroundcolor=\color{background},
-    literate=
-     *{0}{{{\color{numb}0}}}{1}
-      {1}{{{\color{numb}1}}}{1}
-      {2}{{{\color{numb}2}}}{1}
-      {3}{{{\color{numb}3}}}{1}
-      {4}{{{\color{numb}4}}}{1}
-      {5}{{{\color{numb}5}}}{1}
-      {6}{{{\color{numb}6}}}{1}
-      {7}{{{\color{numb}7}}}{1}
-      {8}{{{\color{numb}8}}}{1}
-      {9}{{{\color{numb}9}}}{1}
-      {:}{{{\color{punct}{:}}}}{1}
-      {,}{{{\color{punct}{,}}}}{1}
-      {\{}{{{\color{delim}{\{}}}}{1}
-      {\}}{{{\color{delim}{\}}}}}{1}
-      {[}{{{\color{delim}{[}}}}{1}
-      {]}{{{\color{delim}{]}}}}{1},
-}
-
-\definecolor{dkgreen}{rgb}{0,0.6,0}
-\definecolor{gray}{rgb}{0.5,0.5,0.5}
-\definecolor{mauve}{rgb}{0.58,0,0.82}
-
-\lstset{frame=tb,
-  language=Java,
-  aboveskip=3mm,
-  belowskip=3mm,
-  showstringspaces=false,
-  columns=flexible,
-  basicstyle={\small\ttfamily},
-  numbers=none,
-  numberstyle=\tiny\color{gray},
-  keywordstyle=\color{blue},
-  commentstyle=\color{dkgreen},
-  stringstyle=\color{mauve},
-  breaklines=true,
-  breakatwhitespace=true,
-  tabsize=3
-}
 
 \begin{document}
 
@@ -245,7 +211,7 @@ O espaço físico da unidade fabril está mapeada em coordenadas (\textit{xy}) q
 
 \subsubsection{Máquinas}
 
-No início, cada lote tem uma máquina da fase 1 aleatoriamente assignada de acordo com a capacidade de cada máquina. Para o caso da fábrica do exemplo da figura \ref{scenario}, as decisões a serem tomadas por cada máquina estão representadas na figura \ref{decisionMach}.
+No início, cada lote tem uma máquina da fase 1 aleatoriamente assignada de acordo com a capacidade de cada máquina. Para o caso da fábrica do exemplo da figura \ref{scenario}, as decisões a serem tomadas por cada máquina estão representadas na figura \ref{decisionMach}.\newline\newline
 
 \begin{figure}[H]
   \raggedleft 
@@ -356,17 +322,29 @@ C = \frac{A-d_{T}}{nr_{pedidos}}
 \end{tabular}
 \end{table}
 
-Um pedido é impossível de ser satisfeito por um AGV se $A-d_{T} < d_{e}$. Caso $A-d_{T} >= d_{e}$, o pedido é válido. O AGV faz o cálculo do custo para todos os trajetos possíveis tendo em conta os pedidos da queue e os novos pedidos. O objectivo é maximizar o número de pedidos satisfazidos e minimizar o custo total. Assim, o custo comunicado à máquina que requere o transporte é o menor encontrado pelo AGV que satisfaz esse pedido. A máquina escolhe o AGV que lhe comunicar o menor custo de todos.
+O cálculo de qualquer distância segue a fórmula matemática \ref{eqDist}.
+
+\begin{equation}
+d_{AB} = \sqrt{(x_{B}-x_{A})^{2}+(y_{B}-y_{A})^{2}}
+\label{eqDist}
+\end{equation}\newline
+
+Um pedido é impossível de ser satisfeito por um AGV se $A-d_{T} < d_{e}$. Caso $A-d_{T} >= d_{e}$, o pedido é válido. O AGV faz o cálculo do custo para todos os trajetos possíveis tendo em conta os pedidos da queue e os novos pedidos. O objectivo é maximizar o número de pedidos satisfazidos e minimizar o custo total. Assim, o custo comunicado à máquina que requer o transporte é o menor encontrado pelo AGV que satisfaz esse pedido. A máquina escolhe o AGV que lhe comunicar o menor custo de todos.
 
 \paragraph{Movimento no sentido negativo}
 
 Pode acontecer o caso de um AGV receber um pedido de uma máquina que se encontra numa posição que implique ao mesmo andar para um lado contrário ao que ele se dirigia. Um AGV avalia apenas a possibilidade de andar no sentido negativo se a localização da máquina se encontrar dentro de um raio com diâmetro igual à distância entre o AGV e o próximo destino na sua queue.\newline
 
-\textbf{FAZER GIF PARA EXPLICAR ISTO}
+\begin{figure}[H]
+  \centering
+    \includegraphics[width=10cm, height = 6cm]{negativeMotion.png}
+  \caption{Cenário demonstrativo de um movimento no sentido negativo possível.}
+  \label{negativeMotion}
+\end{figure}
 
-\iffalse
-package{animate} \animategraphics{12}{foo-}{0}{18} nomes dos ficheiros foo-01.png, etc...
-\fi
+Pode-se observar na figura \ref{negativeMotion} o seguinte cenário: um AGV dirige-se a B para carregar um lote e levá-lo para C. Quando se encontra a meio do caminho, A requer um serviço de transporte até B. O AGV calcula a sua distância a B. A encontra-se dentro do círculo com raio igual a essa distância. Depois de fazer novos cálculos com a fórmula \ref{eqCusto}, o AGV decide ir a A antes de ir a B. Desta forma, o AGV faz o percurso A->B->C satisfazendo tanto o pedido de B como o de A, o que lhe faz poupar bateria e aumenta a eficiência do escoamento de pedidos.\newline
+
+Qualquer pedido efetuado por máquinas fora do círculo não serão considerados pelo AGV por nunca valerem a pena nem em termos de bateria para o AGV nem em termos de eficiência da unidade de produção.
 
 \subsection{Objectivos}
 \justify\normalsize
@@ -374,7 +352,7 @@ O maior objectivo inerente a esta simulação é o de verificar a possibilidade 
 
 Será assumido na simulação que é do interesse da fábrica obter a maior eficiência possível na sua linha de produção. Isto significa que todas as escolhas de agentes terão em vista obter uma maior produtividade.
 
-\subsection{Avaliação dos resultados}
+\subsection{Avaliação dos resultados} \label{ssec:evaluation}
 \justify\normalsize
 Os resultados serão avaliados através da construção de estatísticas das seguintes variáveis:
 
@@ -391,12 +369,12 @@ Pretende-se ainda fazer uma análise comparativa entre cenários da quantidade d
 
 \subsection{Resultados esperados}
 \justify\normalsize
-Espera-se que o sistema tenha uma boa performance para situações baseadas no mundo real (unidades de produção médias e grandes). Antecipa-se que o intervalo de negociação máquina-AGV seja maior do que o tempo de negociação máquina-máquina devido à necessidade de cálculo de todos os caminhos possíveis.
+Espera-se que o sistema tenha uma boa performance para situações baseadas no mundo real (unidades de produção médias e grandes). Antecipa-se que o intervalo de negociação máquina-AGV seja maior do que o tempo de negociação máquina-máquina devido à necessidade de cálculo de todos os caminhos possíveis.\newline 
 
 Espera-se que em certos cenários a execução se torne mais lenta. Considera-se que os fatores que mais podem influenciar o tempo de execução são os seguintes:
 
 \begin{enumerate}
-\item Número exagerado de máquinas e de AGV's no cenário;
+\item Número elevado de máquinas e de AGV's no cenário;
 \item Grande afluência de pedidos praticamente ou totalmente simultâneos.
 \end{enumerate}
 
@@ -407,13 +385,24 @@ Espera-se que em certos cenários a execução se torne mais lenta. Considera-se
 
 \section{Ferramentas}
 
-\subsection{Explicação das plataformas a usar}
-JADE e SAJAS
+\subsection{\textit{Overview} das plataformas a usar}
+Para o desenvolvimento deste projecto serão utilizadas as ferramentas JADE, Repast Symphony e SAJaS. A linguagem de programação usada será JAVA.
 
-\subsubsection{Características principais}
+\begin{description}
+\item[JADE] Criação e definição de agentes.
+\item[Repast Simphony] Simulação de agentes.
+\item[SAJaS] Plataforma que possibilita a integração de agentes JADE com Repast.
+\end{description}
 
+O Repast Simphony é uma ferramenta importante na simulação de agentes pois permite simulações de MAS (\textit{Multi-agent Systems}) e visualização de gráficos com a informação colecionada durante as simulações. Esta plataforma tem uma interface gráfica intuitiva e extremamente interessante.
+
+O SAJaS é também um componente chave pois permite integrar agentes JADE em simulações REPAST. Esta ferramenta permite juntar o melhor dos dois mundos: a construção de sistemas de agentes do JADE com o poder visual das simulações do REPAST. A maior vantagem de usar o SAJaS para integrar estas duas plataformas é o facto de permitir usar o poder do JADE de criação de agentes - o sistema das páginas amarelas, os comportamentos de agentes e a comunicação com protocolos FIPA - e poder simular vários agentes ao mesmo tempo com o REPAST, incluindo uma interface gráfica extremamente útil.
 
 \subsubsection{Funcionalidades Relevantes}
+
+O Repast Simphony tem uma componente visual muito forte (interface gráfica) o que facilita a visualização do comportamento de agentes num espaço físico, o que é extremamente interessante para projectar o espaço físico da unidade fabril e verificar o movimento dos AGV's. Para além disto, a plataforma será muito importante pois permitirá visualizar os indicadores chave da performance dos agentes especialmente as estatísticas referidas no ponto \ref{ssec:evaluation} que irão ser relevantes para a avaliação do sistema.
+
+Os aspectos mais relevantes do JADE serão os \textit{behaviours} para definir os comportamentos, o \textit{Directory Facilitator} para tomar conhecimento de todos os agentes ativos e os seus AID's e os protocolos de comunicação FIPA para facilitar a comunicação e negociação entre agentes.
 
 
 %----------------------------------------------------------------------------------------
@@ -423,10 +412,87 @@ JADE e SAJAS
 \section{Sistema}
 
 \subsection{Identificação e caracterização dos agentes}
-Máquinas e AGV's. As máquinas processam lotes e os AGV tratam do transporte destes. Quando uma máquina acaba o processamento, deverá negociar com uma nova máquina o transporte da peça que deverá ser feito pelos AGV.
+O sistema será composto por dois tipos de agentes diferentes: \textbf{máquina} e \textbf{AGV}.
+
+\begin{description}
+\item[Máquina] - Agente representativo de uma máquina da linha de produção. Processa lotes, negoceia com máquinas da fase de produção seguinte e comunica com AGV's por forma a escolher o transporte do lote para a fase seguinte.
+\item[AGV] - Agente representativo de um AGV. Comunica com máquinas, respondendo com os custos das deslocações. Se for requerido, transporta lotes entre máquinas.
+\end{description}
+
+Os comportamentos que os agentes podem ter estão especificados na tabela \ref{tableBehaviour}.
+
+\begin{table}[H]
+\centering
+\caption{Comportamentos possíveis dos agentes.}
+\label{tableBehaviour}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\multicolumn{1}{c}{\textbf{Comportamento}} & \textbf{Descrição} & \textbf{Agentes}      \\ \midrule
+\multicolumn{1}{c}{Processar lotes}& Processo de processamento de um lote. & Máquina      \\ \midrule
+\multicolumn{1}{c}{Negociar fase seguinte} & \begin{tabular}[c]{@{}l@{}}Negociação para escolher a máquina da fase seguinte \\ que vai processar o lote.\end{tabular} & Máquina      \\ \midrule
+\multicolumn{1}{c}{Negociar transporte}    & Negociação do melhor AGV para efetuar o transporte.                           & Máquina, AGV \\ \midrule
+\multicolumn{1}{c}{Movimento} & Qualquer movimentação feita no espaço físico.                                 & AGV          \\ \midrule
+\multicolumn{1}{c}{Carregamento} & \begin{tabular}[c]{@{}l@{}}Passagem de carga da máquina que requer o transporte \\ para um AGV.\end{tabular} & Máquina, AGV \\ \midrule
+\multicolumn{1}{c}{Entrega}  & Passagem da carga do AGV para a máquina destino.                              & Máquina, AGV \\ \midrule
+\multicolumn{1}{c}{Recarregamento}  & Recarregamento da bateria na estação.                                         & AGV  \\ \bottomrule  
+\end{tabular}
+\end{table}
 
 \subsection{Interação entre agentes}
-As máquinas processam os lotes/peças e comunicam com as outras máquinas a próxima fase. Após decidirem qual deverá ser a próxima máquina a processar as peças devem comunicar com os AGV disponíveis o transporte entre a máquina atual e a seguinte no processo.
+A comunicação entre agentes será efetuada com o auxílio de mensagens JADE tomando proveito dos protocolos FIPA. Para cada agente tomar conhecimento de todos os outros agentes ativos e para obter os seus AID's será utilizado o \textit{Directory Facilitator} (DF) do JADE.\newline
+
+\begin{lstlisting}
+// Message sender API pseudo-code for FIPA INFORM type
+public class Sender extends Agent {
+	protected void send(String content, ArrayList AID_receivers){
+		ACLMessage msg = new ACLMessage( ACLMessage.INFORM );
+		msg.setContent(content);
+		msg.addReceiver(AID_receiver); 
+       // add more receivers if needed
+		send(msg);
+    }
+}
+\end{lstlisting}
+
+\begin{lstlisting}
+// Message receiver API pseudo-code for FIPA INFORM type
+public class Receiver extends Agent {
+	protected void setup() {
+    	addBehaviour(new CyclicBehaviour(this) {
+        	public void action() {
+            	ACLMessage msg= receive();
+                if (msg!=null)
+                	reply(msg);
+                else
+					<... do something else ...>
+             }
+		});
+	}
+    protected void reply(ACLMessage msg){
+    	ACLMessage reply = msg.createReply();
+        reply.setPerformative( ACLMessage.INFORM );
+        reply.setContent("Message content" );
+        reply.send();
+    }
+}
+\end{lstlisting}
+
+Ao ser iniciada uma simulação, todos os agentes máquina fazem \textit{broadcast} da sua localização e a fase de produção a que pertencem. Cada agente guarda desta interação inicial a informação importante às suas tarefas. Agentes máquina guardam os AIDs de todas as máquinas da fase seguinte à sua. Os AGV's guardam a localização de todas as máquinas.\newline
+
+As interações entre agentes podem ser de dois tipos:
+
+\begin{enumerate}
+\item Máquina - máquina;
+\item Máquina - AGV.
+\end{enumerate}
+
+\subsubsection{Protocolo máquina-máquina}
+
+\textbf{FALTA ISTO!!!!!!!!!!!!!!!}
+
+\subsubsection{Protocolo máquina-AGV}
+
+\textbf{FALTA ISTO!!!!!!!!!!!!!!!!!}
 
 \subsection{Faseamento}
 Prevê-se que o projeto seja desenvolvido segundo as fases especificadas em baixo.
@@ -442,7 +508,7 @@ Prevê-se que o projeto seja desenvolvido segundo as fases especificadas em baix
 
 \section{Conclusões}
 \justify\normalsize
-
+Conclui-se que o sistema planeado é extremamente relevante, tendo um papel importante no aprofundamento do conhecimento de agentes de inteligência artificial. Na realidade, a utilização das ferramentas referidas no documento ajuda a compreender os âmbitos de agentes, os processos de construção e simulação dos mesmos. A inteligência artificial é cada vez mais um factor de extrema importância à vida humana, em facto, tem-se espalhado por todos os cantos do mundo, tomando de assombro todos os dispositivos tecnológicos. Esta disciplina já é mais do que um sonho, é algo concreto, possível, algo que desafia aquilo que se achavam serem as leis da vida e da inteligência. O facto de que este projecto possa ter um âmbito do mundo real é um factor de motivação e apela ao seu desenvolvimento.
 
 \bibliography{title_page_1}
 \bibliographystyle{plain}
