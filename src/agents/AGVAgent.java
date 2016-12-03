@@ -27,6 +27,13 @@ public class AGVAgent implements Drawable {
     private static int IDNumber = 0;
     private int ID;
 
+    /**
+     * Constructor of an AGV agent
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param power ammount of moves the AGV can still do
+     * @param maxCapacity maximum capacity of transport
+     */
     public AGVAgent(int x,int y,int power,int maxCapacity){
         this.maxCapacity=maxCapacity;
         this.currentCapacity=0;
@@ -38,6 +45,9 @@ public class AGVAgent implements Drawable {
         ID = IDNumber;
     }
 
+    /**
+     * Set the move vector
+     */
     private void setVxVy(){
         vX = 0;
         vY = 0;
@@ -46,10 +56,17 @@ public class AGVAgent implements Drawable {
             vY = (int)Math.floor(Math.random() * 3) - 1;
         }
     }
+
+    /**
+     * set the position coordinates of the AGV
+     * @param xNew new x coordinate
+     * @param yNew new y coordinate
+     */
     public void setXY(int xNew, int yNew){
         this.x = xNew;
         this.y=yNew;
     }
+
 
     public void setSpace(Space space){
         this.space=space;
@@ -122,6 +139,14 @@ public class AGVAgent implements Drawable {
         return ID;
     }
 
+    /**
+     * Calculate the distance between 2 points
+     * @param oX starting x coordinate
+     * @param oY starting y coordinate
+     * @param dX destination x coordinate
+     * @param dY destination y coordinate
+     * @return the distance between the 2 points
+     */
     private double calcDist(int oX,int oY,int dX,int dY){
         return Math.sqrt(Math.pow((dX-oX),2)+Math.pow(dY-oY,2));
     }
@@ -150,10 +175,20 @@ public class AGVAgent implements Drawable {
         power--;*/
     }
 
+    /**
+     * try to move the AGV
+     * @param newX new x coordinate
+     * @param newY new y coordinate
+     * @return if the AGV moved or not
+     */
     private boolean tryMove(int newX, int newY){
         return space.moveAGVAt(x, y, newX, newY);
     }
 
+    /**
+     * charge the power of the AGV
+     * @param amount ammount to be charged
+     */
     public void chargePower(int amount){
         power += amount;
     }
@@ -166,6 +201,9 @@ public class AGVAgent implements Drawable {
         return currentCapacity;
     }
 
+    /**
+     * report the state of the AGV in console
+     */
     public void report(){
         System.out.println(getID() +
                 " at " +

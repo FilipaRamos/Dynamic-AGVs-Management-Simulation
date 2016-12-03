@@ -1,7 +1,12 @@
 package agents;
 
 
-public class MachineAgent {
+import uchicago.src.sim.gui.Drawable;
+import uchicago.src.sim.gui.SimGraphics;
+
+import java.awt.*;
+
+public class MachineAgent implements Drawable{
     private int capacity;
     private int velocity;
     private boolean maintenance;
@@ -84,6 +89,11 @@ public class MachineAgent {
 
     public void setMaintenance(boolean maintenance) {
         this.maintenance = maintenance;
+    }
+
+    @Override
+    public void draw(SimGraphics G) {
+        G.drawFastRect(Color.BLUE);
     }
 
     public int getX() {
