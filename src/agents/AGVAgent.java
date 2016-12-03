@@ -127,7 +127,7 @@ public class AGVAgent implements Drawable {
     }
 
     public void step(){
-        int newX = x + vX;
+       /* int newX = x + vX;
         int newY = y + vY;
 
         Object2DGrid grid = space.getCurrentAGVSpace();
@@ -140,14 +140,14 @@ public class AGVAgent implements Drawable {
         else{
             AGVAgent cda = space.getAGVAt(newX, newY);
             if (cda!= null){
-                /*if(money > 0){
+                if(money > 0){
                     cda.receiveMoney(1);
                     money--;
-                }*/
+                }
             }
             setVxVy();
         }
-        power--;
+        power--;*/
     }
 
     private boolean tryMove(int newX, int newY){
