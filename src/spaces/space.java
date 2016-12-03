@@ -32,7 +32,7 @@ public class space {
         if(!isCellOccupied(newX, newY)){
             AGVAgent agv = (AGVAgent)AGVSpace.getObjectAt(x, y);
             removeAGV(x, y);
-            agv.move(newX, newY);
+            agv.setXY(newX, newY);
             AGVSpace.putObjectAt(newX, newY, agv);
             retVal = true;
         }
