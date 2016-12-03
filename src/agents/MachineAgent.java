@@ -1,7 +1,7 @@
 package agents;
 
 
-public class machineAgent {
+public class MachineAgent {
     private int capacity;
     private int velocity;
     private boolean maintenance;
@@ -21,7 +21,7 @@ public class machineAgent {
      * @param x x coordinate
      * @param y y coordinate
      */
-    public machineAgent(int processID, int stepID, int cap, int vel, int x, int y){
+    public MachineAgent(int processID, int stepID, int cap, int vel, int x, int y){
         this.processingStep = processID;
         this.stepID = stepID;
         this.capacity = cap;

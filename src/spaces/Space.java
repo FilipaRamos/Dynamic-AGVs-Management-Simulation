@@ -1,20 +1,22 @@
 package spaces;
 
+import agents.AGVAgent;
+import agents.CarryDropAgent;
 import uchicago.src.sim.space.Object2DGrid;
 
 /**
  * Created by test on 03/12/2016.
  */
-public class space {
+public class Space {
     private Object2DGrid AGVSpace;
     private Object2DGrid machineSpace;
 
     /**
      * Constructor of AGV and machines spaces
-     * @param xSize width of the space
-     * @param ySize height of the space
+     * @param xSize width of the Space
+     * @param ySize height of the Space
      */
-    public space(int xSize, int ySize){
+    public Space(int xSize, int ySize){
         AGVSpace = new Object2DGrid(xSize, ySize);
         machineSpace = new Object2DGrid(xSize, ySize);
     }
@@ -69,4 +71,27 @@ public class space {
         return machineSpace;
     }
 
+    public AGVAgent getAGVAt(int x, int y){
+        AGVAgent retVal = null;
+        if(AGVSpace.getObjectAt(x, y) != null){
+            retVal = (AGVAgent)AGVSpace.getObjectAt(x,y);
+        }
+        return retVal;
+    }
+
+    public boolean moveAGVAt(int x, int y, int newX, int newY){
+        boolean retVal = false;
+        if(!isCellOccupied(newX, newY)){
+            CarryDropAgent cda = (CarryDropAgent)AGVSpace.getObjectAt(x, y);
+            removeAGVAt(x,y);
+            cda.setXY(newX, newY);
+            AGVSpace.putObjectAt(newX, newY, cda);
+            retVal = true;
+        }
+        return retVal;
+    }
+
+    private void removeAGVAt(int x, int y){
+        AGVSpace.putObjectAt(x, y, null);
+    }
 }
