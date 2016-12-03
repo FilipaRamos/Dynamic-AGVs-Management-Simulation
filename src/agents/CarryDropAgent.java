@@ -1,7 +1,10 @@
+package agents;
+
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
+import spaces.CarryDropSpace;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 import uchicago.src.sim.space.Object2DGrid;

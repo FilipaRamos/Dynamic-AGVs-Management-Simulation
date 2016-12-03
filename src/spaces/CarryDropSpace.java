@@ -1,3 +1,6 @@
+package spaces;
+
+import agents.CarryDropAgent;
 import uchicago.src.sim.space.Object2DGrid;
 
 

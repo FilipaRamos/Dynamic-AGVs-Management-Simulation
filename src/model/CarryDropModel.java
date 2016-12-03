@@ -1,4 +1,7 @@
-import uchicago.src.sim.analysis.*;
+package model;
+
+import agents.CarryDropAgent;
+import spaces.CarryDropSpace;
 import uchicago.src.sim.engine.BasicAction;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
