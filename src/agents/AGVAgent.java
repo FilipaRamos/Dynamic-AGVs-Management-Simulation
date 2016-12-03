@@ -20,7 +20,7 @@ public class AGVAgent implements Drawable {
     private int maxCapacity;
     private int currentCapacity;
     private int power;
-    private ArrayList requests;
+    private ArrayList requests = new ArrayList();
     private Space space;
 
 
@@ -48,6 +48,17 @@ public class AGVAgent implements Drawable {
     /**
      * Set the move vector
      */
+    public AGVAgent(){
+        this.maxCapacity=3;
+        this.currentCapacity=0;
+        this.x=-1;
+        this.y=-1;
+        this.power=100;
+        setVxVy();
+        IDNumber++;
+        ID = IDNumber;
+    }
+
     private void setVxVy(){
         vX = 0;
         vY = 0;
@@ -66,7 +77,6 @@ public class AGVAgent implements Drawable {
         this.x = xNew;
         this.y=yNew;
     }
-
 
     public void setSpace(Space space){
         this.space=space;
@@ -181,8 +191,8 @@ public class AGVAgent implements Drawable {
      * @param newY new y coordinate
      * @return if the AGV moved or not
      */
-    private boolean tryMove(int newX, int newY){
-        return space.moveAGVAt(x, y, newX, newY);
+    private boolean makeMove(int newX, int newY){
+        return space.moveAGV(x, y, newX, newY);
     }
 
     /**
@@ -212,6 +222,10 @@ public class AGVAgent implements Drawable {
                 getPower() + " power" +
                 " and " +
                 getCurrentCapacity() + "/"+ getMaxCapacity() +" capacity and "+getRequests().size()+" total Requests");
+    }
+
+    public void setCapacity(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
     }
 
     //public double calCost()

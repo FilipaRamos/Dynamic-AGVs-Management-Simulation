@@ -2,12 +2,14 @@ package spaces;
 
 import agents.AGVAgent;
 import agents.CarryDropAgent;
+import uchicago.src.sim.space.Discrete2DSpace;
 import uchicago.src.sim.space.Object2DGrid;
 
 
 public class Space {
     private Object2DGrid AGVSpace;
     private Object2DGrid machineSpace;
+    private Object2DGrid backgroundSpace;
 
     /**
      * Constructor of AGV and machines spaces
@@ -17,6 +19,12 @@ public class Space {
     public Space(int xSize, int ySize){
         AGVSpace = new Object2DGrid(xSize, ySize);
         machineSpace = new Object2DGrid(xSize, ySize);
+        backgroundSpace = new Object2DGrid(xSize,ySize);
+        for(int i = 0; i < xSize; i++){
+            for(int j = 0; j < ySize; j++){
+                backgroundSpace.putObjectAt(i,j,new Integer(0));
+            }
+        }
     }
 
     /**
@@ -47,7 +55,7 @@ public class Space {
      */
     public boolean isCellOccupied(int x, int y){
         boolean retVal = false;
-        if(AGVSpace.getObjectAt(x, y)!=null)
+        if(AGVSpace.getObjectAt(x, y)!=null || machineSpace.getObjectAt(x,y)!=null)
             retVal = true;
         return retVal;
     }
@@ -69,39 +77,6 @@ public class Space {
         return machineSpace;
     }
 
-    /**
-     * returns the AGVagent at x, y in AGVSpace
-     * @param x x coordinate
-     * @param y y coordinate
-     * @return AGVAgent in x,y
-     */
-    public AGVAgent getAGVAt(int x, int y){
-        AGVAgent retVal = null;
-        if(AGVSpace.getObjectAt(x, y) != null){
-            retVal = (AGVAgent)AGVSpace.getObjectAt(x,y);
-        }
-        return retVal;
-    }
-
-    /**
-     * Move an AGV from x,y to newX,newY
-     * @param x x coordinate of origin
-     * @param y y coordinate of origin
-     * @param newX x coordinate of destination
-     * @param newY y coordinate of destination
-     * @return if the AGV moved or not
-     */
-    public boolean moveAGVAt(int x, int y, int newX, int newY){
-        boolean retVal = false;
-        if(!isCellOccupied(newX, newY)){
-            CarryDropAgent cda = (CarryDropAgent)AGVSpace.getObjectAt(x, y);
-            removeAGVAt(x,y);
-            cda.setXY(newX, newY);
-            AGVSpace.putObjectAt(newX, newY, cda);
-            retVal = true;
-        }
-        return retVal;
-    }
 
     /**
      * remove an AGV from x,y
@@ -110,5 +85,29 @@ public class Space {
      */
     private void removeAGVAt(int x, int y){
         AGVSpace.putObjectAt(x, y, null);
+    }
+
+    public boolean addAGV(AGVAgent agv) {
+            boolean retVal = false;
+            int count = 0;
+            int countLimit = 10 * AGVSpace.getSizeX() * AGVSpace.getSizeY();
+
+            while((retVal==false) && (count < countLimit)){
+                int x = (int)(Math.random()*(AGVSpace.getSizeX()));
+                int y = (int)(Math.random()*(AGVSpace.getSizeY()));
+                if(isCellOccupied(x,y) == false){
+                    AGVSpace.putObjectAt(x,y,agv);
+                    agv.setXY(x,y);
+                    agv.setSpace(this);
+                    retVal = true;
+                }
+                count++;
+            }
+
+            return retVal;
+    }
+
+    public Object2DGrid getCurrentBackgroundSpace() {
+        return backgroundSpace;
     }
 }
