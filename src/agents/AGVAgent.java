@@ -1,5 +1,6 @@
 package agents;
 
+import sajas.core.Agent;
 import spaces.CarryDropSpace;
 import spaces.Space;
 import uchicago.src.sim.gui.Drawable;
@@ -12,7 +13,7 @@ import java.util.ArrayList;
 /**
  * Created by danie on 03/12/2016.
  */
-public class AGVAgent implements Drawable {
+public class AGVAgent extends Agent implements Drawable {
     private int x;
     private int y;
     private int vX;
@@ -161,8 +162,8 @@ public class AGVAgent implements Drawable {
         return Math.sqrt(Math.pow((dX-oX),2)+Math.pow(dY-oY,2));
     }
 
-    public void step(){
-       /* int newX = x + vX;
+    /*public void step(){
+        int newX = x + vX;
         int newY = y + vY;
 
         Object2DGrid grid = space.getCurrentAGVSpace();
@@ -182,8 +183,8 @@ public class AGVAgent implements Drawable {
             }
             setVxVy();
         }
-        power--;*/
-    }
+        power--;
+    }*/
 
     /**
      * try to move the AGV

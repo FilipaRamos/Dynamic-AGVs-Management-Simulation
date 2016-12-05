@@ -1,11 +1,12 @@
 package agents;
 
+import sajas.core.Agent;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
 
-public class MachineAgent implements Drawable{
+public class MachineAgent extends Agent implements Drawable{
     private int capacity;
     private int velocity;
     private boolean maintenance;
@@ -35,6 +36,9 @@ public class MachineAgent implements Drawable{
         this.y = y;
         this.lotsProducing = 0;
         this.potential = (1/cap) * (1/vel);
+    }
+    public MachineAgent(){
+        //this.processingStep
     }
 
     /**
@@ -66,7 +70,7 @@ public class MachineAgent implements Drawable{
      * Setup the agent
      */
     protected void setup() {
-    	System.out.println(�Hello! Machine Agent � + getAID().getName() + � is ready.�);
+    	System.out.println("Hello! Machine Agent " + getAID().getName() + " is ready.");
     	report();
     }
 
@@ -150,4 +154,6 @@ public class MachineAgent implements Drawable{
     public void setLotsProducing(int lotsProducing) {
         this.lotsProducing = lotsProducing;
     }
+
+
 }

@@ -1,11 +1,8 @@
 package model;
 
 import agents.AGVAgent;
-import agents.CarryDropAgent;
 import agents.MachineAgent;
-import spaces.CarryDropSpace;
 import spaces.Space;
-import uchicago.src.sim.engine.BasicAction;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
 import uchicago.src.sim.engine.SimModelImpl;
@@ -13,7 +10,6 @@ import uchicago.src.sim.gui.ColorMap;
 import uchicago.src.sim.gui.DisplaySurface;
 import uchicago.src.sim.gui.Object2DDisplay;
 import uchicago.src.sim.gui.Value2DDisplay;
-import uchicago.src.sim.util.SimUtilities;
 
 import java.awt.*;
 import java.util.ArrayList;
