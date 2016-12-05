@@ -37,6 +37,9 @@ public class MachineAgent implements Drawable{
         this.lotsProducing = 0;
         this.potential = (1/cap) * (1/vel);
     }
+    public MachineAgent(){
+        this.processingStep
+    }
 
     /**
      * add a lot to the machine
