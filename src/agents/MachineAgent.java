@@ -77,7 +77,7 @@ public class MachineAgent extends Agent implements Drawable{
     /**
      * Get and set methods
      */
-    
+
     public int getCapacity() {
         return capacity;
     }
