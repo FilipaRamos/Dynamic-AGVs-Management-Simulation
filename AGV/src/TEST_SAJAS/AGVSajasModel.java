@@ -1,8 +1,5 @@
 package TEST_SAJAS;
 
-import TEST.ConsumerAgent;
-import TEST.ProviderAgent;
-import TEST.ResultsCollector;
 import agents.AGVAgent;
 import agents.MachineAgent;
 import jade.core.AID;
@@ -12,20 +9,14 @@ import jade.wrapper.StaleProxyException;
 import sajas.core.Runtime;
 import sajas.sim.repast3.Repast3Launcher;
 import sajas.wrapper.ContainerController;
-import uchicago.src.sim.analysis.OpenSequenceGraph;
-import uchicago.src.sim.analysis.Sequence;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
 import uchicago.src.sim.gui.DisplaySurface;
-import uchicago.src.sim.gui.Network2DDisplay;
 import uchicago.src.sim.gui.OvalNetworkItem;
 import uchicago.src.sim.network.DefaultDrawableNode;
 
 import java.awt.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 public class AGVSajasModel extends Repast3Launcher {
 
@@ -150,10 +141,10 @@ public class AGVSajasModel extends Repast3Launcher {
 			dsurf.dispose();
 		dsurf = new DisplaySurface(this, "Service Consumer/Provider Display");
 		registerDisplaySurface("Service Consumer/Provider Display", dsurf);
-		Network2DDisplay display = new Network2DDisplay(nodes,WIDTH,HEIGHT);
+		/*Network2DDisplay display = new Network2DDisplay(nodes,WIDTH,HEIGHT);
 		dsurf.addDisplayableProbeable(display, "Network Display");
         dsurf.addZoomable(display);
-        addSimEventListener(dsurf);
+        addSimEventListener(dsurf);*/
 		dsurf.display();
 
 

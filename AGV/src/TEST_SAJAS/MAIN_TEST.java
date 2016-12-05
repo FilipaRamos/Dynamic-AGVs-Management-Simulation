@@ -19,9 +19,9 @@ public class MAIN_TEST {
             }
         }
 
-        for(int i = 0; i < machines.size();i++){
+       /* for(int i = 0; i < machines.size();i++){
             System.out.println(machines.get(i).printMachineName());
-        }
+        }*/
     }
 
     public class Machine{
