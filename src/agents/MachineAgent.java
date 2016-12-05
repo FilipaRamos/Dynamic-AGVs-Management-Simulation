@@ -66,14 +66,14 @@ public class MachineAgent implements Drawable{
      * Setup the agent
      */
     protected void setup() {
-    	System.out.println(“Hello! Machine Agent “ + getAID().getName() + ” is ready.”);
+    	System.out.println(ï¿½Hello! Machine Agent ï¿½ + getAID().getName() + ï¿½ is ready.ï¿½);
     	report();
     }
 
     /**
      * Get and set methods
      */
-    
+
     public int getCapacity() {
         return capacity;
     }
