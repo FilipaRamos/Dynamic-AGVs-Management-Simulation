@@ -86,7 +86,6 @@ public class AGVSajasModel extends Repast3Launcher {
 		agvAgents = new ArrayList<AGVAgent>();
 		machineAgents = new ArrayList<MachineAgent>();
 
-		
 		try {
 			
 			AID resultsCollectorAID = null;

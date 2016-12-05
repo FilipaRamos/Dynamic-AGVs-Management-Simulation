@@ -1,10 +1,23 @@
 package agents;
 
+import behaviours.MachineBehaviour;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
+import negotiation.ContractOutcome;
+import negotiation.ProviderValue;
+import sajas.core.AID;
 import sajas.core.Agent;
+import sajas.domain.DFService;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MachineAgent extends Agent implements Drawable{
     private int capacity;
@@ -13,9 +26,16 @@ public class MachineAgent extends Agent implements Drawable{
     private int x, y;
     private int potential;
     private int lotsProducing;
+    private int timeToFinishLot = 10/velocity;
 
     private int processingStep;
     private int stepID;
+
+    // Contractual Net Services Utilities
+    public int nBestProviders;
+    public ArrayList<ContractOutcome> contractOutcomes = new ArrayList<ContractOutcome>();
+    public Map<AID,ProviderValue> providersTable = new HashMap<AID,ProviderValue>();
+    public ArrayList<ProviderValue> providersList = new ArrayList<ProviderValue>();
 
     /**
      * Constructor of a machine agent
@@ -36,7 +56,9 @@ public class MachineAgent extends Agent implements Drawable{
         this.y = y;
         this.lotsProducing = 0;
         this.potential = (1/cap) * (1/vel);
+        this.timeToFinishLot = 0;
     }
+
     public MachineAgent(){
         //this.processingStep
     }
@@ -55,6 +77,13 @@ public class MachineAgent extends Agent implements Drawable{
     }
 
     /**
+     * remove a lot because it has finished processing
+     */
+    public void removeLot(){
+        lotsProducing--;
+    }
+
+    /**
      * report the state of the machine in console
      */
     public void report(){
@@ -67,11 +96,54 @@ public class MachineAgent extends Agent implements Drawable{
     }
 
     /**
-     * Setup the agent
+     * Setup the agent - including DF and Behaviours
      */
     protected void setup() {
+        // hello message agent
     	System.out.println("Hello! Machine Agent " + getAID().getName() + " is ready.");
     	report();
+
+        // register provider at DF
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.setName(getAID());
+        dfd.addProtocols(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+        ServiceDescription sd = new ServiceDescription();
+        sd.setName(getLocalName() + "-service-provider");
+        sd.setType("service-provider");
+        dfd.addServices(sd);
+        try {
+            DFService.register(this, dfd);
+        } catch (FIPAException e) {
+            System.err.println(e.getMessage());
+        }
+
+        // behaviours registration
+        addBehaviour(new MachineBehaviour(this));
+
+    }
+
+    /**
+     * Get the contratual net best providers
+     * @return ArrayList<AID> the AID of the providers
+     */
+    public ArrayList<AID> getBestProviders() {
+
+        ArrayList<AID> bestProviders = new ArrayList<AID>();
+
+        Collections.sort(providersList);
+        for(int i = 0; i < nBestProviders && i < providersList.size(); i++) {
+            bestProviders.add(providersList.get(i).getProvider());
+        }
+
+        return bestProviders;
+    }
+
+    /**
+     *
+     */
+    public void addProviderOutcome(AID provider, ContractOutcome.Value outcome) {
+        ProviderValue pv = providersTable.get(provider);
+        //pv.addOutcome(outcome);
     }
 
     /**
@@ -101,6 +173,12 @@ public class MachineAgent extends Agent implements Drawable{
     public void setMaintenance(boolean maintenance) {
         this.maintenance = maintenance;
     }
+
+    public int getTimeLot(){return timeToFinishLot;}
+
+    public void setTimeLot(int newTime){timeToFinishLot = newTime;}
+
+    public void decrementTimeLot(){timeToFinishLot--;}
 
     @Override
     public void draw(SimGraphics G) {

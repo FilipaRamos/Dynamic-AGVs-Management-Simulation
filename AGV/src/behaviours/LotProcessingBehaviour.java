@@ -1,29 +1,32 @@
 package behaviours;
 
 import agents.MachineAgent;
-import sajas.core.behaviours.Behaviour;
-import utils.Lot;
+import sajas.core.behaviours.SimpleBehaviour;
 
 /**
  * Created by utilizador on 05/12/2016.
  */
-public class LotProcessingBehaviour extends Behaviour {
+public class LotProcessingBehaviour extends SimpleBehaviour {
 
     protected MachineAgent mag;
-    protected Lot lot;
 
-    public LotProcessingBehaviour(MachineAgent mag, Lot lot){
+    public LotProcessingBehaviour(MachineAgent mag){
         this.mag = mag;
-        this.lot = lot;
     }
 
     @Override
     public void action() {
 
-        int speed = mag.getVelocity();
-        int time = 0;
-
-
+        // if there are lots to process
+        if(mag.getLotsProducing() > 0) {
+            // if the lot is not finished processing
+            if (mag.getTimeLot() > 0) {
+                mag.decrementTimeLot();
+            } else if (mag.getTimeLot() == 0) {
+                // new lot to be processed
+                mag.setTimeLot(0);
+            }
+        }
 
     }
 
