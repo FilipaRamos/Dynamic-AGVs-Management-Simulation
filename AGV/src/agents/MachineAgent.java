@@ -1,6 +1,5 @@
 package agents;
 
-import behaviours.MachineBehaviour;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
@@ -9,6 +8,10 @@ import negotiation.ContractOutcome;
 import negotiation.ProviderValue;
 import sajas.core.AID;
 import sajas.core.Agent;
+import sajas.core.behaviours.Behaviour;
+import sajas.core.behaviours.FSMBehaviour;
+import sajas.core.behaviours.ParallelBehaviour;
+import sajas.core.behaviours.SimpleBehaviour;
 import sajas.domain.DFService;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
@@ -18,6 +21,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static utils.Constants.NEGOTIATED_MACHINE;
+import static utils.Constants.PROCESSED;
 
 public class MachineAgent extends Agent implements Drawable{
     private int capacity;
@@ -118,7 +124,24 @@ public class MachineAgent extends Agent implements Drawable{
         }
 
         // behaviours registration
-        addBehaviour(new MachineBehaviour(this));
+        FSMBehaviour productionCycle = new FSMBehaviour();
+
+        productionCycle.registerFirstState(new LotProcessingBehaviour(), "Process");
+        productionCycle.registerState(new NegotiateMachineBehaviour(), "NegotiationMachine");
+        //productionCycle.registerLastState(new NegotiateAGVBehaviour(), "NegotiationAGV");
+        productionCycle.registerTransition("Process", "NegotiationMachine", PROCESSED);
+        productionCycle.registerTransition("NegotiationMachine", "NegotiationAGV", NEGOTIATED_MACHINE);
+
+        ParallelBehaviour paralel = new ParallelBehaviour();
+
+        // cycle: process->negotiate machine->negotiate transport
+        paralel.addSubBehaviour(productionCycle);
+        paralel.addSubBehaviour(new sajas.core.behaviours.OneShotBehaviour() {
+            @Override
+            public void action() {
+                lotsProducing++;
+            }
+        });
 
     }
 
@@ -231,6 +254,53 @@ public class MachineAgent extends Agent implements Drawable{
 
     public void setLotsProducing(int lotsProducing) {
         this.lotsProducing = lotsProducing;
+    }
+
+    /**
+     * Behaviours
+     */
+
+    /**
+     * Behaviour of processing lots
+     */
+    protected class LotProcessingBehaviour extends SimpleBehaviour {
+
+        @Override
+        public void action() {
+
+            // if there are lots to process
+            if(lotsProducing > 0) {
+                // if the lot is not finished processing
+                if (timeToFinishLot > 0) {
+                    decrementTimeLot();
+                } else if (timeToFinishLot == 0) {
+                    // new lot to be processed
+                    done();
+                }
+            }
+
+        }
+
+        @Override
+        public boolean done() {
+            return true;
+        }
+    }
+
+    /**
+     * Behaviour to negotiate with machines
+     */
+    protected class NegotiateMachineBehaviour extends Behaviour {
+
+        @Override
+        public void action() {
+            // negotiation protocol
+        }
+
+        @Override
+        public boolean done() {
+            return false;
+        }
     }
 
 
