@@ -1,6 +1,5 @@
 package agents;
 
-
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
@@ -63,10 +62,18 @@ public class MachineAgent implements Drawable{
                 x + "," + y + "]");
     }
 
+    /**
+     * Setup the agent
+     */
+    protected void setup() {
+    	System.out.println(“Hello! Machine Agent “ + getAID().getName() + ” is ready.”);
+    	report();
+    }
 
-
-
-    //GET's e SET's
+    /**
+     * Get and set methods
+     */
+    
     public int getCapacity() {
         return capacity;
     }
