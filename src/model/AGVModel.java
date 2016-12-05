@@ -3,6 +3,14 @@ package model;
 import agents.AGVAgent;
 import agents.MachineAgent;
 import spaces.Space;
+import uchicago.src.sim.engine.Schedule;
+import uchicago.src.sim.engine.SimInit;
+import uchicago.src.sim.engine.SimModelImpl;
+import uchicago.src.sim.gui.ColorMap;
+import uchicago.src.sim.gui.DisplaySurface;
+import uchicago.src.sim.gui.Object2DDisplay;
+import uchicago.src.sim.gui.Value2DDisplay;
+
 import java.awt.*;
 import java.util.ArrayList;
 
