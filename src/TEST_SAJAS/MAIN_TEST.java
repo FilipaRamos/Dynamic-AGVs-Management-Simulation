@@ -1,38 +1,37 @@
 package TEST_SAJAS;
 
+import sun.misc.Regexp;
+
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by danie on 04/12/2016.
  */
 public class MAIN_TEST {
-    private static final int NUM_MACHINES_AGENTS = 6;
-    private static final int NUM_MACHINE_PHASES = 3;
-    private static ArrayList<Machine> machines;
 
-    public static void main(String[] args) {
-        machines = new ArrayList<>();
-        int machines_per_phase = NUM_MACHINES_AGENTS/NUM_MACHINE_PHASES;
-        for(int i = 1; i <= NUM_MACHINE_PHASES;i++){
-            for(int x = 1; x <= machines_per_phase;x++){
 
-            }
-        }
 
-        for(int i = 0; i < machines.size();i++){
-            System.out.println(machines.get(i).printMachineName());
-        }
+    public static void  main(String[] args) {
+
+        /*Pattern p = Pattern.compile("\\[");
+        Matcher m = p.matcher("\\[");
+        boolean b = m.matches();
+        if(b)
+            System.out.println("c1");
+        else
+            System.out.println("c2");*/
+       /* String string = "[2,3,4]";
+        String[] parts = string.split("\\[]");
+        System.out.println("numparts: "+parts.length);
+        String part1 = parts[0]; // 004
+        String part2 = parts[1]; // 034556
+        System.out.println("Part1: "+part1);
+        System.out.println("Part2: "+part2);*/
+
     }
 
-    public class Machine{
-        private int ID;
-        private int Phase;
-
-        public Machine(int ID,int Phase){
-            this.ID=ID;
-            this.Phase=Phase;
-        }
-    }
 
 
 }
