@@ -5,7 +5,6 @@ import agents.CarryDropAgent;
 import uchicago.src.sim.space.Discrete2DSpace;
 import uchicago.src.sim.space.Object2DGrid;
 
-
 public class Space {
     private Object2DGrid AGVSpace;
     private Object2DGrid machineSpace;
@@ -28,12 +27,12 @@ public class Space {
     }
 
     /**
-     * move an AGV
+     * moves an AGV
      * @param x x coordinate of AGV current position
      * @param y y coordinate of AGV current position
      * @param newX new x coordinate of AGV position
      * @param newY new y coordinate of AGV position
-     * @return if the AGV can move
+     * @return true in case the movement is possible, false otherwise
      */
     public boolean moveAGV(int x, int y, int newX, int newY){
         boolean retVal = false;
@@ -51,7 +50,7 @@ public class Space {
      * verifies if cell (x, y) is occupied
      * @param x x coordinate
      * @param y y coordinate
-     * @return if the cell is occupied
+     * @return true in case the cell is occupied, false otherwise
      */
     public boolean isCellOccupied(int x, int y){
         boolean retVal = false;
@@ -77,9 +76,8 @@ public class Space {
         return machineSpace;
     }
 
-
     /**
-     * remove an AGV from x,y
+     * remove an AGV from the position (x,y)
      * @param x x coordinate
      * @param y y coordinate
      */
@@ -87,6 +85,11 @@ public class Space {
         AGVSpace.putObjectAt(x, y, null);
     }
 
+    /**
+     * adds an AGV agent to the space
+     * @param AGVAgent the agent to add
+     * @return true in case the agent was successfully added, false otherwise
+     */
     public boolean addAGV(AGVAgent agv) {
             boolean retVal = false;
             int count = 0;
