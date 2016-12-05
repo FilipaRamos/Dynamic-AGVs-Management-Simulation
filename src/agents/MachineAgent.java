@@ -1,10 +1,27 @@
 package agents;
 
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
+import jade.lang.acl.ACLMessage;
+import negotiation.ContractOutcome;
+import negotiation.ProviderValue;
+import sajas.core.AID;
 import sajas.core.Agent;
+import sajas.core.behaviours.*;
+import sajas.domain.DFService;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import static utils.Constants.NEGOTIATED_MACHINE;
+import static utils.Constants.PROCESSED;
 
 public class MachineAgent extends Agent implements Drawable{
     private int capacity;
@@ -13,9 +30,16 @@ public class MachineAgent extends Agent implements Drawable{
     private int x, y;
     private int potential;
     private int lotsProducing;
+    private int timeToFinishLot = 10/velocity;
 
     private int processingStep;
     private int stepID;
+
+    // Contractual Net Services Utilities
+    public int nBestProviders;
+    public ArrayList<ContractOutcome> contractOutcomes = new ArrayList<ContractOutcome>();
+    public Map<AID,ProviderValue> providersTable = new HashMap<AID,ProviderValue>();
+    public ArrayList<ProviderValue> providersList = new ArrayList<ProviderValue>();
 
     /**
      * Constructor of a machine agent
@@ -36,7 +60,9 @@ public class MachineAgent extends Agent implements Drawable{
         this.y = y;
         this.lotsProducing = 0;
         this.potential = (1/cap) * (1/vel);
+        this.timeToFinishLot = 0;
     }
+
     public MachineAgent(){
         //this.processingStep
     }
@@ -55,6 +81,13 @@ public class MachineAgent extends Agent implements Drawable{
     }
 
     /**
+     * remove a lot because it has finished processing
+     */
+    public void removeLot(){
+        lotsProducing--;
+    }
+
+    /**
      * report the state of the machine in console
      */
     public void report(){
@@ -67,11 +100,71 @@ public class MachineAgent extends Agent implements Drawable{
     }
 
     /**
-     * Setup the agent
+     * Setup the agent - including DF and Behaviours
      */
     protected void setup() {
+        // hello message agent
     	System.out.println("Hello! Machine Agent " + getAID().getName() + " is ready.");
     	report();
+
+        // register provider at DF
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.setName(getAID());
+        dfd.addProtocols(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+        ServiceDescription sd = new ServiceDescription();
+        sd.setName(getLocalName() + "-service-provider");
+        sd.setType("service-provider");
+        dfd.addServices(sd);
+        try {
+            DFService.register(this, dfd);
+        } catch (FIPAException e) {
+            System.err.println(e.getMessage());
+        }
+
+        // behaviours registration
+        FSMBehaviour productionCycle = new FSMBehaviour();
+
+        productionCycle.registerFirstState(new LotProcessingBehaviour(), "Process");
+        productionCycle.registerState(new NegotiateMachineBehaviour(), "NegotiationMachine");
+        //productionCycle.registerLastState(new NegotiateAGVBehaviour(), "NegotiationAGV");
+        productionCycle.registerTransition("Process", "NegotiationMachine", PROCESSED);
+        productionCycle.registerTransition("NegotiationMachine", "NegotiationAGV", NEGOTIATED_MACHINE);
+
+        ParallelBehaviour paralel = new ParallelBehaviour();
+
+        // cycle: process->negotiate machine->negotiate transport
+        paralel.addSubBehaviour(productionCycle);
+        paralel.addSubBehaviour(new sajas.core.behaviours.OneShotBehaviour() {
+            @Override
+            public void action() {
+                lotsProducing++;
+            }
+        });
+
+    }
+
+    /**
+     * Get the contratual net best providers
+     * @return ArrayList<AID> the AID of the providers
+     */
+    public ArrayList<AID> getBestProviders() {
+
+        ArrayList<AID> bestProviders = new ArrayList<AID>();
+
+        Collections.sort(providersList);
+        for(int i = 0; i < nBestProviders && i < providersList.size(); i++) {
+            bestProviders.add(providersList.get(i).getProvider());
+        }
+
+        return bestProviders;
+    }
+
+    /**
+     *
+     */
+    public void addProviderOutcome(AID provider, ContractOutcome.Value outcome) {
+        ProviderValue pv = providersTable.get(provider);
+        //pv.addOutcome(outcome);
     }
 
     /**
@@ -101,6 +194,12 @@ public class MachineAgent extends Agent implements Drawable{
     public void setMaintenance(boolean maintenance) {
         this.maintenance = maintenance;
     }
+
+    public int getTimeLot(){return timeToFinishLot;}
+
+    public void setTimeLot(int newTime){timeToFinishLot = newTime;}
+
+    public void decrementTimeLot(){timeToFinishLot--;}
 
     @Override
     public void draw(SimGraphics G) {
@@ -153,6 +252,83 @@ public class MachineAgent extends Agent implements Drawable{
 
     public void setLotsProducing(int lotsProducing) {
         this.lotsProducing = lotsProducing;
+    }
+
+    /**
+     * Behaviours
+     */
+
+    /**
+     * Behaviour of processing lots
+     */
+    protected class LotProcessingBehaviour extends SimpleBehaviour {
+
+        @Override
+        public void action() {
+
+            // if there are lots to process
+            if(lotsProducing > 0) {
+                // if the lot is not finished processing
+                if (timeToFinishLot > 0) {
+                    decrementTimeLot();
+                } else if (timeToFinishLot == 0) {
+                    // new lot to be processed
+                    done();
+                }
+            }
+
+        }
+
+        @Override
+        public boolean done() {
+            return true;
+        }
+    }
+
+    /**
+     * Behaviour to negotiate with machines
+     */
+    protected class NegotiateMachineBehaviour extends Behaviour {
+
+        @Override
+        public void action() {
+            // negotiation protocol
+        }
+
+        @Override
+        public boolean done() {
+            return false;
+        }
+    }
+
+    /**
+     * Listen for messages and distributes them
+     */
+    protected class ListenMessages extends CyclicBehaviour{
+
+        @Override
+        public void action() {
+            ACLMessage msg = myAgent.receive();
+            if (msg != null) {
+                // Message received. Process it
+                String title = msg.getContent();
+                ACLMessage reply = msg.createReply();
+                Integer price = (Integer) catalogue.get(title);
+                if (price != null) {
+                    // The requested book is available for sale. Reply with the price
+                    reply.setPerformative(ACLMessage.PROPOSE);
+                    reply.setContent(String.valueOf(price.intValue()));
+                }
+                else {
+                    // The requested book is NOT available for sale.
+                    reply.setPerformative(ACLMessage.REFUSE);
+                    reply.setContent("not-available");
+                }
+                myAgent.send(reply);
+            }else{
+                block();
+            }
+        }
     }
 
 

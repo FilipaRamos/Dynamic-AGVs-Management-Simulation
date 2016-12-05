@@ -1,11 +1,9 @@
 package agents;
 
 import sajas.core.Agent;
-import spaces.CarryDropSpace;
 import spaces.Space;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
-import uchicago.src.sim.space.Object2DGrid;
 
 import java.awt.*;
 import java.util.ArrayList;
