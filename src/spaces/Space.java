@@ -87,7 +87,7 @@ public class Space {
 
     /**
      * adds an AGV agent to the space
-     * @param AGVAgent the agent to add
+     * @param agv the agent to add
      * @return true in case the agent was successfully added, false otherwise
      */
     public boolean addAGV(AGVAgent agv) {
