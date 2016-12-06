@@ -7,6 +7,8 @@ import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import sajas.core.Agent;
+import sajas.core.behaviours.CyclicBehaviour;
+import sajas.core.behaviours.ParallelBehaviour;
 import sajas.domain.DFService;
 import sajas.proto.ContractNetResponder;
 import spaces.Space;
@@ -31,16 +33,18 @@ public class AGVAgent extends Agent implements Drawable {
     private int currentCapacity;
     private int power;
 
+    // PowerStation Coordinates
+    private int powerX;
+    private int powerY;
+
     // queue of requests
     private PriorityQueue<String> requests = new PriorityQueue();
+    // location of the machines
     private ArrayList<MachineLocation> machinesLocations;
-    private int energyLeft;
-    private int totalDistance;
-    private int rechargeDistance;
 
     // space of the simulation
     private Space space;
-    private ArrayList<AID> machines;
+    private AID[] machines;
 
     private static int IDNumber = 0;
     private int ID;
@@ -52,20 +56,21 @@ public class AGVAgent extends Agent implements Drawable {
      * @param power ammount of moves the AGV can still do
      * @param maxCapacity maximum capacity of transport
      */
-    public AGVAgent(int x,int y,int power,int maxCapacity){
+    public AGVAgent(int x,int y,int power,int maxCapacity, int powerX, int powerY){
         this.maxCapacity=maxCapacity;
         this.currentCapacity=0;
         this.x=x;
         this.y=y;
         this.power=power;
+        this.powerX = powerX;
+        this.powerY = powerY;
+
         setVxVy();
         IDNumber++;
         ID = IDNumber;
 
-        energyLeft = 0;
-        totalDistance = 0;
-        rechargeDistance = 0;
         machinesLocations = new ArrayList();
+        machines = new AID[]{};
     }
 
     /**
@@ -111,28 +116,131 @@ public class AGVAgent extends Agent implements Drawable {
      */
     protected void setupBehaviours() {
 
+        // responder message template
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
+                MessageTemplate.MatchPerformative(ACLMessage.CFP) );
+        ResponderContractNetBehaviour proposals = new ResponderContractNetBehaviour(this, template);
 
+        AGVHandlerBehaviour handler = new AGVHandlerBehaviour();
+
+        ParallelBehaviour pb = new ParallelBehaviour();
+
+        pb.addSubBehaviour(proposals);
+        pb.addSubBehaviour(handler);
 
     }
 
     /**
-     * Updates the energy that's left
-     * @param newStep the step that is being evaluated to be added to the queue
+     * Search the DF for the desired agents
      */
-    protected void updateLeftEnergy(String newStep){
+    protected void search(){
 
-        PriorityQueue<String> requestsTemp = new PriorityQueue<String>(requests);
-        double totalDist = 0;
+        DFAgentDescription template = new DFAgentDescription();
+        ServiceDescription sd = new ServiceDescription();
+        sd.setType("machine-" + "/\\[[0-9]+\\]/");
+        template.addServices(sd);
 
-        for(String request : requestsTemp){
-            String[] splitted = request.split("-");
-            totalDist += calculateDistance(splitted[0], splitted[1]);
+        try {
+            DFAgentDescription[] result = DFService.search(this, template);
+            for (int i = 0; i < result.length; ++i) {
+                machines[i] = result[i].getName();
+            }
         }
-
-
+        catch (FIPAException fe) {
+            fe.printStackTrace();
+        }
 
     }
 
+    /**
+     * Evaluates the addition of the new step to the requests queue
+     * @param newStep the step that is being evaluated to be added to the queue
+     */
+    protected boolean evaluateStep(String newStep){
+
+        PriorityQueue<String> requestsTemp = new PriorityQueue<String>(requests);
+        requestsTemp.add(newStep);
+        String[] splitStep = newStep.split("-");
+        requestsTemp.add(splitStep[1] + "-station");
+
+        double dT = calculateTotalDistance(requestsTemp);
+        double dExtra = calculateExtraDistance(requestsTemp);
+        double dE = calculateDistance(splitStep[1], powerX, powerY);
+        double finalDistance = dT + dExtra + dE;
+
+        if(finalDistance > power)
+            return false;
+
+        return true;
+
+    }
+
+    /**
+     * Calculates the total distance of all paths in the requests queue
+     * @param requestsTemp the queue of requests
+     * @return distance calculated
+     */
+    private double calculateTotalDistance(PriorityQueue<String> requestsTemp){
+
+        double totalDist = 0;
+
+        for(String request : requestsTemp){
+            String[] splited = request.split("-");
+            double currentDist = calculateDistance(splited[0], splited[1]);
+            if(currentDist == -1){
+                System.out.println("[ERROR] Distance in between points could not be calculated! - " + splited[0] + "->" + splited[1]);
+                return -1;
+            }
+            totalDist += currentDist;
+        }
+
+        return totalDist;
+    }
+
+    /**
+     * Calculates the distance from the end point of a request to the start point of another
+     * @param requestsTemp the queue of requests
+     * @return distance calculated
+     */
+    private double calculateExtraDistance(PriorityQueue<String> requestsTemp){
+
+        ArrayList<String> extra = new ArrayList<>();
+        String start = null;
+        String end;
+        double dExtra = 0;
+        int counter = 1;
+
+        for(String request : requestsTemp){
+            String[] splited = request.split("-");
+            if(counter%2 == 0) {
+                end = splited[0];
+                if(start != end)
+                    extra.add(start + "-" + end);
+            }
+            else {
+                start = splited[1];
+            }
+            counter++;
+        }
+
+        for(int i = 0; i < extra.size(); i++){
+            String[] decomposed = extra.get(i).split("-");
+            double curDist = calculateDistance(decomposed[0], decomposed[1]);
+            if(curDist != -1)
+                dExtra += curDist;
+        }
+
+        return dExtra;
+
+    }
+
+    /**
+     * Calculates the distance in between 2 machines
+     * @param start the AID of the machine the path starts on
+     * @param end the AID of the machine the path ends on
+     * @return value of the distance
+     */
     private double calculateDistance(String start, String end) {
 
         MachineLocation mlStart = null;
@@ -154,36 +262,58 @@ public class AGVAgent extends Agent implements Drawable {
     }
 
     /**
+     * Calculates the distance between a machine and a point with the given coordinates
+     * @param point aid of the machine
+     * @param x x coordinate of the location
+     * @param y y coordinate of the location
+     * @return value of the distance
+     */
+    private double calculateDistance(String point, int x, int y){
+        MachineLocation location = null;
+
+        for(int i = 0; i < machinesLocations.size(); i++){
+            if(machinesLocations.get(i).AID == point)
+                location = machinesLocations.get(i);
+        }
+
+        if(location != null){
+            return Math.sqrt((Math.pow((x - location.x), 2)) + (Math.pow((y - location.y), 2)));
+        }else{
+            return -1;
+        }
+
+    }
+
+    /**
      * Behaviour to respond to a contract Net request
      */
-    protected class ResponderContractNetMachineBehaviour extends ContractNetResponder {
+    protected class ResponderContractNetBehaviour extends ContractNetResponder {
 
-        public ResponderContractNetMachineBehaviour(Agent a, MessageTemplate mt) {
+        public ResponderContractNetBehaviour(Agent a, MessageTemplate mt) {
             super(a, mt);
             System.out.println("Set up of the machine " + a.getName() + " - Contract Net Responder");
+            search();
         }
 
         @Override
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
             System.out.println("Agent " + getLocalName() + ": CFP received from " + cfp.getSender().getName() + ". Action is " + cfp.getContent());
 
-            /*if (capacity > 0) {
+            if (getCapacityBalance() > 0) {
                 // We provide a proposal
-                System.out.println("Agent " + getLocalName() + ": Proposing " + potential);
+                // TODO add proposal failure evaluation - 3 conditions
+                System.out.println("Agent " + getLocalName() + ": Proposing " + calculateCost(cfp.getSender().toString(), cfp.getContent()));
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
-                propose.setContent(String.valueOf(potential));
+                propose.setContent(String.valueOf(calculateCost(cfp.getSender().toString(), cfp.getContent())));
                 return propose;
             }
             else {
-                // We refuse to provide a proposal because the machine does not have capacity to process another lot
+                // We refuse to provide a proposal because the agv does not have capacity to transport another lot
                 System.out.println("Agent " + getLocalName() + ": Refuse");
-                throw new RefuseException("evaluation-failed");
-            }*/
-            /**
-             * TODO
-             */
-            return null;
+                throw new RefuseException("transportation-refused");
+            }
+
         }
 
         @Override
@@ -197,6 +327,31 @@ public class AGVAgent extends Agent implements Drawable {
             System.out.println("Agent " + getLocalName() + ": Proposal rejected");
         }
 
+        protected double calculateCost(String start, String destiny){
+            PriorityQueue<String> requestsTemp = new PriorityQueue<>(requests);
+            requestsTemp.add(start + "-" + destiny);
+
+            double totalDist = calculateTotalDistance(requestsTemp);
+
+            return (power - totalDist)/requests.size();
+        }
+
+    }
+
+    /**
+     * Behaviour class to move agv (fullfil requests and recharge actions)
+     */
+    protected class AGVHandlerBehaviour extends CyclicBehaviour{
+
+        @Override
+        public void action() {
+
+            if(requests.size() > 0) {
+                // evaluate energy
+                // handle move
+                // handle delivery
+            }
+        }
     }
 
     /**
@@ -293,18 +448,6 @@ public class AGVAgent extends Agent implements Drawable {
         this.vY = vY;
     }
 
-    /*public ArrayList getRequests() {
-        return requests;
-    }*/
-
-    /*public void setRequests(ArrayList requests) {
-        this.requests = requests;
-    }*/
-
-    /*public void addRequest(Request r){
-        requests.add(r);
-    }*/
-
     public Space getSpace() {
         return space;
     }
@@ -317,45 +460,25 @@ public class AGVAgent extends Agent implements Drawable {
         this.power = power;
     }
 
-    public int getID() {
-        return ID;
+    /**
+     * Decrements the power by the provided factor
+     * @param factor factor by which to decrement the power
+     */
+    public void decrementPower(int factor) {
+        power -= factor;
     }
 
     /**
-     * Calculate the distance between 2 points
-     * @param oX starting x coordinate
-     * @param oY starting y coordinate
-     * @param dX destination x coordinate
-     * @param dY destination y coordinate
-     * @return the distance between the 2 points
+     * charge the power of the AGV
+     * @param amount ammount to be charged
      */
-    private double calcDist(int oX,int oY,int dX,int dY){
-        return Math.sqrt(Math.pow((dX-oX),2)+Math.pow(dY-oY,2));
+    public void chargePower(int amount){
+        power += amount;
     }
 
-    /*public void step(){
-        int newX = x + vX;
-        int newY = y + vY;
-
-        Object2DGrid grid = space.getCurrentAGVSpace();
-        newX = (newX + grid.getSizeX()) % grid.getSizeX();
-        newY = (newY + grid.getSizeY()) % grid.getSizeY();
-
-        if(tryMove(newX, newY)){
-            //money += cdSpace.takeMoneyAt(x, y);
-        }
-        else{
-            AGVAgent cda = space.getAGVAt(newX, newY);
-            if (cda!= null){
-                if(money > 0){
-                    cda.receiveMoney(1);
-                    money--;
-                }
-            }
-            setVxVy();
-        }
-        power--;
-    }*/
+    public int getID() {
+        return ID;
+    }
 
     /**
      * try to move the AGV
@@ -367,20 +490,16 @@ public class AGVAgent extends Agent implements Drawable {
         return space.moveAGV(x, y, newX, newY);
     }
 
-    /**
-     * charge the power of the AGV
-     * @param amount ammount to be charged
-     */
-    public void chargePower(int amount){
-        power += amount;
-    }
-
     public int getMaxCapacity() {
         return maxCapacity;
     }
 
     public int getCurrentCapacity() {
         return currentCapacity;
+    }
+
+    public int getCapacityBalance(){
+        return maxCapacity - currentCapacity;
     }
 
     /**
@@ -399,7 +518,5 @@ public class AGVAgent extends Agent implements Drawable {
     public void setCapacity(int maxCapacity) {
         this.maxCapacity = maxCapacity;
     }
-
-    //public double calCost()
 
 }

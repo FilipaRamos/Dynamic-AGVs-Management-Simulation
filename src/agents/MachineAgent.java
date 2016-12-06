@@ -55,16 +55,13 @@ public class MachineAgent extends Agent implements Drawable{
         this.capacity = cap;
         this.velocity = vel;
         this.maintenance = false;
+        // TODO add the machine location
         //this.x = x;
         //this.y = y;
         this.lotsProducing = 0;
         this.potential = (1/cap) * (1/vel);
 
         timeToFinishLot = 10/velocity;
-    }
-
-    public MachineAgent(){
-        //this.processingStep
     }
 
     /**
@@ -163,6 +160,7 @@ public class MachineAgent extends Agent implements Drawable{
 
     /**
      * Search the DF for the desired agents
+     * @param type the type of agents to search
      */
     protected void search(String type){
 
