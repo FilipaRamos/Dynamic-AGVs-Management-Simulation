@@ -16,7 +16,10 @@ import sajas.proto.ContractNetResponder;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
@@ -33,6 +36,7 @@ public class MachineAgent extends Agent implements Drawable{
 
     private int processingStep;
     private int stepID;
+    private Image image;
 
     // AID of the AGVs
     private AID[] agvs;
@@ -56,7 +60,11 @@ public class MachineAgent extends Agent implements Drawable{
         this.y = y;
         this.lotsProducing = 0;
         this.potential = (1/cap) * (1/vel);
-
+        try {
+            image = ImageIO.read(new File("src/pepe.jpg"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         timeToFinishLot = 10/velocity;
     }
 
@@ -244,7 +252,7 @@ public class MachineAgent extends Agent implements Drawable{
 
     @Override
     public void draw(SimGraphics G) {
-        G.drawFastRect(Color.BLUE);
+        G.drawImageToFit(image);
     }
 
     public int getX() {

@@ -9,6 +9,7 @@ import sajas.core.Runtime;
 import sajas.sim.repast3.Repast3Launcher;
 import sajas.wrapper.ContainerController;
 import spaces.Space;
+import uchicago.src.sim.engine.BasicAction;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
 import uchicago.src.sim.gui.ColorMap;
@@ -31,8 +32,8 @@ public class AGVSajasModel extends Repast3Launcher {
 	public static final boolean SEPARATE_CONTAINERS = false;
 
 	//map
-	private static final int WORLDXSIZE = 200;
-	private static final int WORLDYSIZE = 200;
+	private static final int WORLDXSIZE = 30;
+	private static final int WORLDYSIZE = 30;
 	private Space space;
 	private DisplaySurface displaySurf;
 
@@ -183,6 +184,14 @@ public class AGVSajasModel extends Repast3Launcher {
 
 		System.out.println("Running BuildSchedule");
 		schedule.scheduleActionAtInterval(1, displaySurf, "updateDisplay", Schedule.LAST);
+		class MoveAgentPEPE extends BasicAction {
+			public void execute(){
+				moveAgent();
+			}
+		}
+		schedule.scheduleActionAtInterval(500,new MoveAgentPEPE());
+
+
 		addSimEventListener(displaySurf);
 		System.out.println("Running BuildDisplay");
 		buildDisplayAgents();
@@ -190,6 +199,16 @@ public class AGVSajasModel extends Repast3Launcher {
 
 		displaySurf.display();
 	}
+
+	private void moveAgent() {
+		MachineAgent m = machineAgents.get(0);
+		int x = m.getX();
+		int y = m.getY();
+		x++;y++;
+		m.setX(x);
+		m.setY(y);
+	}
+
 	public void buildDisplayAgents() {
 
 		Object2DDisplay displayBackground= new Object2DDisplay(space.getCurrentBackgroundSpace());

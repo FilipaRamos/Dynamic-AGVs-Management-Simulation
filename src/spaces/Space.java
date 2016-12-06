@@ -25,7 +25,7 @@ public class Space {
      */
     public Space(int xSize, int ySize){
         try {
-            image = ImageIO.read(new File("src/HDD.jpg"));
+            image = ImageIO.read(new File("src/tile.jpg"));
         } catch (IOException e) {
             e.printStackTrace();
         }
