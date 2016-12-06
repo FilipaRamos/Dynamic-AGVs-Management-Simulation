@@ -6,8 +6,6 @@ import jade.domain.FIPAException;
 import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import negotiation.ContractOutcome;
-import negotiation.ProviderValue;
 import sajas.core.Agent;
 import sajas.core.behaviours.ParallelBehaviour;
 import sajas.core.behaviours.SequentialBehaviour;
@@ -19,7 +17,10 @@ import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.Vector;
 
 public class MachineAgent extends Agent implements Drawable{
     private int capacity;
@@ -33,14 +34,9 @@ public class MachineAgent extends Agent implements Drawable{
     private int processingStep;
     private int stepID;
 
-    // Contractual Net Services Utilities
-    public int nBestProviders;
-    public ArrayList<ContractOutcome> contractOutcomes = new ArrayList<ContractOutcome>();
-    public Map<AID,ProviderValue> providersTable = new HashMap<AID,ProviderValue>();
-    public ArrayList<ProviderValue> providersList = new ArrayList<ProviderValue>();
-
-    // AID of the several agents
+    // AID of the AGVs
     private AID[] agvs;
+    // AID of the machines of the next fase
     private AID[] machines;
 
     /**
@@ -114,8 +110,8 @@ public class MachineAgent extends Agent implements Drawable{
         dfd.setName(getAID());
         dfd.addProtocols(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         ServiceDescription sd = new ServiceDescription();
-        sd.setName(getLocalName() + "-machine-processing");
-        sd.setType("machine");
+        sd.setName(getLocalName() + "-machine");
+        sd.setType("machine-" + stepID);
         dfd.addServices(sd);
         try {
             DFService.register(this, dfd);
@@ -150,6 +146,10 @@ public class MachineAgent extends Agent implements Drawable{
         };
         sb.addSubBehaviour(new LotProcessingBehaviour());
         sb.addSubBehaviour(initContract);
+
+        // AGV CONTRACT
+        //AID bestProposer = initContract.bestProposer;
+        //initContractAGV.setBestProposer(bestProposer);
         //sb.addSubBehaviour(initContractAGV);
 
         ParallelBehaviour paralel = new ParallelBehaviour();
@@ -176,37 +176,17 @@ public class MachineAgent extends Agent implements Drawable{
     }
 
     /**
-     * Get the contratual net best providers
-     * @return ArrayList<AID> the AID of the providers
-     */
-    public ArrayList<AID> getBestProviders() {
-
-        ArrayList<AID> bestProviders = new ArrayList<AID>();
-
-        Collections.sort(providersList);
-        for(int i = 0; i < nBestProviders && i < providersList.size(); i++) {
-            bestProviders.add(providersList.get(i).getProvider());
-        }
-
-        return bestProviders;
-    }
-
-    /**
-     *
-     */
-    public void addProviderOutcome(AID provider, ContractOutcome.Value outcome) {
-        ProviderValue pv = providersTable.get(provider);
-        //pv.addOutcome(outcome);
-    }
-
-    /**
      * Search the DF for the desired agents
      */
     protected void search(String type){
 
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription sd = new ServiceDescription();
-        sd.setType(type);
+        if(type == "machine") {
+            int followingStep = stepID + 1;
+            sd.setType(type + "-" + followingStep);
+        }else
+            sd.setType(type);
         template.addServices(sd);
 
         try {
@@ -354,11 +334,13 @@ public class MachineAgent extends Agent implements Drawable{
 
         protected ArrayList<AID> receivers;
         protected int nrReceivers;
+        protected AID bestProposer;
 
         public InitContractNetMachineBehaviour(Agent a, ACLMessage cfp) {
             super(a, cfp);
             receivers = new ArrayList();
             nrReceivers = 0;
+            bestProposer = null;
         }
 
         // add receiver to the list
@@ -396,7 +378,6 @@ public class MachineAgent extends Agent implements Drawable{
             }
             // Evaluate proposals.
             int bestProposal = -1;
-            AID bestProposer = null;
             ACLMessage accept = null;
             Enumeration e = responses.elements();
 
@@ -438,11 +419,15 @@ public class MachineAgent extends Agent implements Drawable{
 
         @Override
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
-            System.out.println("Agent "+getLocalName()+": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
+            System.out.println("Agent " + getLocalName() + ": CFP received from " + cfp.getSender().getName() + ". Action is " + cfp.getContent());
             int proposal = evaluateAction();
+            /**
+             * TODO
+             * MUDA ISTO AMANHÃ FILIPA....
+             */
             if (proposal > 2) {
                 // We provide a proposal
-                System.out.println("Agent "+getLocalName()+": Proposing "+proposal);
+                System.out.println("Agent " + getLocalName() + ": Proposing " + proposal);
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
                 propose.setContent(String.valueOf(proposal));
@@ -476,7 +461,7 @@ public class MachineAgent extends Agent implements Drawable{
 
         private int evaluateAction() {
             // Simulate an evaluation by generating a random number
-            return (int) (Math.random() * 10);
+            return potential;
         }
 
         private boolean performAction() {
