@@ -122,7 +122,7 @@ public class MachineAgent extends Agent implements Drawable{
         search("agv");
 
         // initiator of a net machine behaviour
-        ACLMessage cfp = null;
+        ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
         cfp.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
         //cfp.setContext();
         //cfp.setType();
