@@ -2,7 +2,7 @@ package negotiation;
 
 import agents.MachineAgent;
 import jade.lang.acl.ACLMessage;
-import sajas.core.AID;
+import jade.core.AID;
 import sajas.core.Agent;
 import sajas.proto.ContractNetInitiator;
 

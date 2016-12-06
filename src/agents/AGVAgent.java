@@ -1,6 +1,11 @@
 package agents;
 
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
+import jade.domain.FIPANames;
 import sajas.core.Agent;
+import sajas.domain.DFService;
 import spaces.Space;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
@@ -56,6 +61,28 @@ public class AGVAgent extends Agent implements Drawable {
         setVxVy();
         IDNumber++;
         ID = IDNumber;
+    }
+
+    /**
+     * Setup the agent
+     */
+    public void setup() {
+        // register provider at DF
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.setName(getAID());
+        dfd.addProtocols(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+        ServiceDescription sd = new ServiceDescription();
+        sd.setName(getLocalName() + "-agv-transportation");
+        sd.setType("agv");
+        dfd.addServices(sd);
+        try {
+            DFService.register(this, dfd);
+        } catch (FIPAException e) {
+            System.err.println(e.getMessage());
+        }
+
+        // behaviours
+
     }
 
     private void setVxVy(){
