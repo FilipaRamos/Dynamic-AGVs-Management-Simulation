@@ -104,6 +104,7 @@ public class AGVSajasModel extends Repast3Launcher {
 	private void launchAgents() {
 		try {
 
+			agvAgents = new ArrayList<AGVAgent>();
 			// create agv's
 			// agv agents
 			for (int i = 0; i < num_agv_agents; i++) {
@@ -113,7 +114,7 @@ public class AGVSajasModel extends Repast3Launcher {
 				agentsContainer.acceptNewAgent(name, agv).start();
 			}
 			// machines agents
-			String pattern = "\\p{Punct}\\d+(\\p{Punct}\\d+)*\\p{Punct}";
+			/*String pattern = "\\p{Punct}\\d+(\\p{Punct}\\d+)*\\p{Punct}";
 			Pattern r = Pattern.compile(pattern);
 			Matcher m = r.matcher(machines_and_phases);
 			if (m.matches()) {
@@ -132,7 +133,7 @@ public class AGVSajasModel extends Repast3Launcher {
 					machineAgents.add(machine);
 					agentsContainer.acceptNewAgent(name, machine).start();
 				}
-			}
+			}*/
 			//END machines agents
 
 		} catch (StaleProxyException e) {
@@ -186,7 +187,7 @@ public class AGVSajasModel extends Repast3Launcher {
 		for(int i = 1; i<16; i++){
 			map.mapColor(i, new Color((int)(i * 8 + 127), 0, 0));
 		}
-		map.mapColor(0, Color.white);
+		map.mapColor(0, Color.CYAN);
 
 		Value2DDisplay displayBackground= new Value2DDisplay(space.getCurrentBackgroundSpace(),map);
 

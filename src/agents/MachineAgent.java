@@ -25,7 +25,7 @@ import static utils.Constants.PROCESSED;
 
 public class MachineAgent extends Agent implements Drawable{
     private int capacity;
-    private int velocity=1;
+    private int velocity;
     private boolean maintenance;
     private int x, y;
     private int potential;
