@@ -1,22 +1,28 @@
 package agents;
 
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.core.AID;
+import jade.domain.FIPAAgentManagement.*;
 import jade.domain.FIPAException;
 import jade.domain.FIPANames;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import sajas.core.Agent;
 import sajas.domain.DFService;
+import sajas.proto.ContractNetResponder;
 import spaces.Space;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.PriorityQueue;
 
 /**
  * Created by danie on 03/12/2016.
  */
 public class AGVAgent extends Agent implements Drawable {
+
+    // AGV variables
     private int x;
     private int y;
     private int vX;
@@ -24,9 +30,17 @@ public class AGVAgent extends Agent implements Drawable {
     private int maxCapacity;
     private int currentCapacity;
     private int power;
-    private ArrayList requests = new ArrayList();
-    private Space space;
 
+    // queue of requests
+    private PriorityQueue<String> requests = new PriorityQueue();
+    private ArrayList<MachineLocation> machinesLocations;
+    private int energyLeft;
+    private int totalDistance;
+    private int rechargeDistance;
+
+    // space of the simulation
+    private Space space;
+    private ArrayList<AID> machines;
 
     private static int IDNumber = 0;
     private int ID;
@@ -47,6 +61,11 @@ public class AGVAgent extends Agent implements Drawable {
         setVxVy();
         IDNumber++;
         ID = IDNumber;
+
+        energyLeft = 0;
+        totalDistance = 0;
+        rechargeDistance = 0;
+        machinesLocations = new ArrayList();
     }
 
     /**
@@ -67,12 +86,13 @@ public class AGVAgent extends Agent implements Drawable {
      * Setup the agent
      */
     public void setup() {
+
         // register provider at DF
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
         dfd.addProtocols(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         ServiceDescription sd = new ServiceDescription();
-        sd.setName(getLocalName() + "-agv-transportation");
+        sd.setName(getLocalName() + "-agv");
         sd.setType("agv");
         dfd.addServices(sd);
         try {
@@ -82,7 +102,116 @@ public class AGVAgent extends Agent implements Drawable {
         }
 
         // behaviours
+        setupBehaviours();
 
+    }
+
+    /**
+     * Setup all the behaviours for the agent
+     */
+    protected void setupBehaviours() {
+
+
+
+    }
+
+    /**
+     * Updates the energy that's left
+     * @param newStep the step that is being evaluated to be added to the queue
+     */
+    protected void updateLeftEnergy(String newStep){
+
+        PriorityQueue<String> requestsTemp = new PriorityQueue<String>(requests);
+        double totalDist = 0;
+
+        for(String request : requestsTemp){
+            String[] splitted = request.split("-");
+            totalDist += calculateDistance(splitted[0], splitted[1]);
+        }
+
+
+
+    }
+
+    private double calculateDistance(String start, String end) {
+
+        MachineLocation mlStart = null;
+        MachineLocation mlEnd = null;
+
+        for(int i = 0; i < machinesLocations.size(); i++){
+            if(machinesLocations.get(i).AID == start)
+                mlStart = machinesLocations.get(i);
+            if(machinesLocations.get(i).AID == end)
+                mlEnd = machinesLocations.get(i);
+
+        }
+
+        if(mlStart == null || mlEnd == null)
+            return -1;
+
+        return Math.sqrt((Math.pow((mlEnd.x - mlStart.x), 2)) + (Math.pow((mlEnd.y - mlStart.y), 2)));
+
+    }
+
+    /**
+     * Behaviour to respond to a contract Net request
+     */
+    protected class ResponderContractNetMachineBehaviour extends ContractNetResponder {
+
+        public ResponderContractNetMachineBehaviour(Agent a, MessageTemplate mt) {
+            super(a, mt);
+            System.out.println("Set up of the machine " + a.getName() + " - Contract Net Responder");
+        }
+
+        @Override
+        protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
+            System.out.println("Agent " + getLocalName() + ": CFP received from " + cfp.getSender().getName() + ". Action is " + cfp.getContent());
+
+            /*if (capacity > 0) {
+                // We provide a proposal
+                System.out.println("Agent " + getLocalName() + ": Proposing " + potential);
+                ACLMessage propose = cfp.createReply();
+                propose.setPerformative(ACLMessage.PROPOSE);
+                propose.setContent(String.valueOf(potential));
+                return propose;
+            }
+            else {
+                // We refuse to provide a proposal because the machine does not have capacity to process another lot
+                System.out.println("Agent " + getLocalName() + ": Refuse");
+                throw new RefuseException("evaluation-failed");
+            }*/
+            /**
+             * TODO
+             */
+            return null;
+        }
+
+        @Override
+        protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
+            System.out.println("--- Agent " + getLocalName() + ": Proposal accepted ---");
+            System.out.println("Agent " + getLocalName() + " will get the lot");
+            return null;
+        }
+
+        protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
+            System.out.println("Agent " + getLocalName() + ": Proposal rejected");
+        }
+
+    }
+
+    /**
+     * Delete the agent
+     */
+    protected void takeDown() {
+        // Deregister from the yellow pages
+        try {
+            DFService.deregister(this);
+        } catch (FIPAException fe) {
+            fe.printStackTrace();
+        }
+
+        // Printout a dismissal message
+        System.out.println("Machine-agent " + getAID().getName() + " terminating.");
     }
 
     private void setVxVy(){
@@ -102,6 +231,23 @@ public class AGVAgent extends Agent implements Drawable {
     public void setXY(int xNew, int yNew){
         this.x = xNew;
         this.y=yNew;
+    }
+
+    /**
+     * Data Structure that saves the machine location
+     */
+    protected class MachineLocation{
+
+        public String AID;
+        public int x;
+        public int y;
+
+        public MachineLocation(String AID, int x, int y){
+            this.AID = AID;
+            this.x = x;
+            this.y = y;
+        }
+
     }
 
     public void setSpace(Space space){
@@ -147,17 +293,17 @@ public class AGVAgent extends Agent implements Drawable {
         this.vY = vY;
     }
 
-    public ArrayList getRequests() {
+    /*public ArrayList getRequests() {
         return requests;
-    }
+    }*/
 
-    public void setRequests(ArrayList requests) {
+    /*public void setRequests(ArrayList requests) {
         this.requests = requests;
-    }
+    }*/
 
-    public void addRequest(Request r){
+    /*public void addRequest(Request r){
         requests.add(r);
-    }
+    }*/
 
     public Space getSpace() {
         return space;
@@ -247,7 +393,7 @@ public class AGVAgent extends Agent implements Drawable {
                 " has " +
                 getPower() + " power" +
                 " and " +
-                getCurrentCapacity() + "/"+ getMaxCapacity() +" capacity and "+getRequests().size()+" total Requests");
+                getCurrentCapacity() + "/"+ getMaxCapacity() +" capacity and ");//+getRequests().size()+" total Requests");
     }
 
     public void setCapacity(int maxCapacity) {
