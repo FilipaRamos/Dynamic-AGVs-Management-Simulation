@@ -354,7 +354,7 @@ public class MachineAgent extends Agent implements Drawable{
         }
 
         protected void handleRefuse(ACLMessage refuse) {
-            System.out.println("Agent " + refuse.getSender().getName() + " refused");
+            System.out.println("Agent " + refuse.getSender().getName() + " refused because it has no more capacity.");
         }
 
         protected void handleFailure(ACLMessage failure) {
@@ -376,26 +376,36 @@ public class MachineAgent extends Agent implements Drawable{
                 // Some responder didn't reply within the specified timeout
                 System.out.println("Timeout expired: missing " + (receivers.size() - responses.size()) + " responses");
             }
+
             // Evaluate proposals.
-            int bestProposal = -1;
+            int bestProposal = 999999;
             ACLMessage accept = null;
             Enumeration e = responses.elements();
 
             while (e.hasMoreElements()) {
+
                 ACLMessage msg = (ACLMessage) e.nextElement();
+
                 if (msg.getPerformative() == ACLMessage.PROPOSE) {
+
                     ACLMessage reply = msg.createReply();
                     reply.setPerformative(ACLMessage.REJECT_PROPOSAL);
+
                     acceptances.addElement(reply);
+
                     int proposal = Integer.parseInt(msg.getContent());
-                    if (proposal > bestProposal) {
+
+                    if (proposal < bestProposal) {
+
                         bestProposal = proposal;
                         bestProposer = msg.getSender();
                         accept = reply;
+
                     }
                 }
             }
-            // Accept the proposal of the best proposer
+
+            // Accept the proposal of the best proposer (smallest value of potential)
             if (accept != null) {
                 System.out.println("Accepting proposal " + bestProposal + " from responder " + bestProposer.getName());
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
@@ -420,53 +430,31 @@ public class MachineAgent extends Agent implements Drawable{
         @Override
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
             System.out.println("Agent " + getLocalName() + ": CFP received from " + cfp.getSender().getName() + ". Action is " + cfp.getContent());
-            int proposal = evaluateAction();
-            /**
-             * TODO
-             * MUDA ISTO AMANHÃ FILIPA....
-             */
-            if (proposal > 2) {
+
+            if (capacity > 0) {
                 // We provide a proposal
-                System.out.println("Agent " + getLocalName() + ": Proposing " + proposal);
+                System.out.println("Agent " + getLocalName() + ": Proposing " + potential);
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
-                propose.setContent(String.valueOf(proposal));
+                propose.setContent(String.valueOf(potential));
                 return propose;
             }
             else {
-                // We refuse to provide a proposal
-                System.out.println("Agent "+getLocalName()+": Refuse");
+                // We refuse to provide a proposal because the machine does not have capacity to process another lot
+                System.out.println("Agent " + getLocalName() + ": Refuse");
                 throw new RefuseException("evaluation-failed");
             }
         }
 
         @Override
         protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
-            System.out.println("Agent "+getLocalName()+": Proposal accepted");
-            if (performAction()) {
-                System.out.println("Agent "+getLocalName()+": Action successfully performed");
-                ACLMessage inform = accept.createReply();
-                inform.setPerformative(ACLMessage.INFORM);
-                return inform;
-            }
-            else {
-                System.out.println("Agent "+getLocalName()+": Action execution failed");
-                throw new FailureException("unexpected-error");
-            }
+            System.out.println("--- Agent " + getLocalName() + ": Proposal accepted ---");
+            System.out.println("Agent " + getLocalName() + " will get the lot");
+            return null;
         }
 
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
-            System.out.println("Agent "+getLocalName()+": Proposal rejected");
-        }
-
-        private int evaluateAction() {
-            // Simulate an evaluation by generating a random number
-            return potential;
-        }
-
-        private boolean performAction() {
-            // Simulate action execution by generating a random number
-            return (Math.random() > 0.2);
+            System.out.println("Agent " + getLocalName() + ": Proposal rejected");
         }
 
     }
