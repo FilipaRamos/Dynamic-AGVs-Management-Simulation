@@ -46,14 +46,14 @@ public class MachineAgent extends Agent implements Drawable{
      * @param cap processing capacity of the machine
      * @param vel processing velocity of the machine
      */
-    public MachineAgent(int processID, int stepID, int cap, int vel){
+    public MachineAgent(int processID, int stepID,int x,int y, int cap, int vel){
         this.processingStep = processID;
         this.stepID = stepID;
         this.capacity = cap;
         this.velocity = vel;
         this.maintenance = false;
-        //this.x = x;
-        //this.y = y;
+        this.x = x;
+        this.y = y;
         this.lotsProducing = 0;
         this.potential = (1/cap) * (1/vel);
 

@@ -17,7 +17,10 @@ import uchicago.src.sim.gui.Object2DDisplay;
 import uchicago.src.sim.gui.Value2DDisplay;
 import uchicago.src.sim.space.Object2DGrid;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,6 +53,7 @@ public class AGVSajasModel extends Repast3Launcher {
 	private ArrayList<MachineAgent> machineAgents;
 
 	//info init
+	private Schedule schedule;
 	private int WORLD_X_SIZE = WORLDXSIZE;
 	private int WORLD_Y_SIZE = WORLDYSIZE;
 	private int num_agv_agents = NUM_AGV_AGENTS;
@@ -132,7 +136,7 @@ public class AGVSajasModel extends Repast3Launcher {
 				int num_machines = Integer.parseInt(phases[i]);
 				System.out.println("ON FASE " + i + " WITH MACHINES: " + num_machines);
 				for(int x = 1; x <= num_machines;x++){
-					MachineAgent machine = new MachineAgent(i, x, machines_max_capacity, machines_speed);
+					MachineAgent machine = new MachineAgent(i, x,10,10, machines_max_capacity, machines_speed);
 					String name = "Agent: " + machine.getID();
 					machineAgents.add(machine);
 					agentsContainer.acceptNewAgent(name, machine).start();
@@ -173,37 +177,32 @@ public class AGVSajasModel extends Repast3Launcher {
 		registerDisplaySurface("AGV Model Window 1", displaySurf);
 
 
+		//Build schedule
+		schedule = getSchedule();
+
 
 		System.out.println("Running BuildSchedule");
-		getSchedule().scheduleActionAtInterval(1, displaySurf, "updateDisplay", Schedule.LAST);
+		schedule.scheduleActionAtInterval(1, displaySurf, "updateDisplay", Schedule.LAST);
 		addSimEventListener(displaySurf);
 		System.out.println("Running BuildDisplay");
 		buildDisplayAgents();
 
 
-		System.out.println("DISPLAY");
 		displaySurf.display();
 	}
 	public void buildDisplayAgents() {
-		ColorMap map = new ColorMap();
 
-
-		for(int i = 1; i<16; i++){
-			map.mapColor(i, new Color((int)(i * 8 + 127), 0, 0));
-		}
-		map.mapColor(0, Color.CYAN);
-
-		Value2DDisplay displayBackground= new Value2DDisplay(space.getCurrentBackgroundSpace(),map);
+		Object2DDisplay displayBackground= new Object2DDisplay(space.getCurrentBackgroundSpace());
 
 		//HARD CODED!
-		Object2DGrid AGVSpace = new Object2DGrid(WORLD_X_SIZE, WORLD_Y_SIZE);
-		Object2DDisplay displayAGV= new Object2DDisplay(/*space.getCurrentAGVSpace()*/AGVSpace);
+		Object2DDisplay displayAGV= new Object2DDisplay(space.getCurrentAGVSpace());
 		displayAGV.setObjectList(agvAgents);
-       /* Object2DDisplay displayMachines= new Object2DDisplay(space.getCurrentMachineSpace());
-        displayAGV.setObjectList(machinesList);*/
+        Object2DDisplay displayMachines= new Object2DDisplay(space.getCurrentMachineSpace());
+        displayAGV.setObjectList(machineAgents);
 
 		displaySurf.addDisplayableProbeable(displayBackground,"Background");
 		displaySurf.addDisplayableProbeable(displayAGV, "AGV");
+		displaySurf.addDisplayableProbeable(displayMachines, "Machines");
 	}
 	/**
 	 * Launching SAJASAGVModel
