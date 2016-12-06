@@ -45,10 +45,8 @@ public class MachineAgent extends Agent implements Drawable{
      * @param stepID the id inside the processID
      * @param cap processing capacity of the machine
      * @param vel processing velocity of the machine
-     * @param x x coordinate
-     * @param y y coordinate
      */
-    public MachineAgent(int processID, int stepID, int cap, int vel, int x, int y){
+    public MachineAgent(int processID, int stepID, int cap, int vel){
         this.processingStep = processID;
         this.stepID = stepID;
         this.capacity = cap;
@@ -294,6 +292,10 @@ public class MachineAgent extends Agent implements Drawable{
 
     public void setLotsProducing(int lotsProducing) {
         this.lotsProducing = lotsProducing;
+    }
+
+    public String getID() {
+        return processingStep+"."+stepID;
     }
 
     /**

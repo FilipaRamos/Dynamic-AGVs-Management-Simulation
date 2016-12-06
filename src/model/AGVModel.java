@@ -102,7 +102,7 @@ public class AGVModel extends SimModelImpl {
     }
 
     private void addNewAGV(){
-        AGVAgent a = new AGVAgent();
+        AGVAgent a = new AGVAgent(100);//WARNING! THIS IS HARDCODED HERE BUT IT SHOULD NOT BE!!!
         a.setPower(AgvPower);
         a.setCapacity(MaxCapacity);
         agvList.add(a);
