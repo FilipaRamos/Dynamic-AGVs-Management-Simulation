@@ -2,7 +2,6 @@ package TEST_SAJAS;
 
 import agents.AGVAgent;
 import agents.MachineAgent;
-import jade.core.AID;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.wrapper.StaleProxyException;
@@ -12,8 +11,10 @@ import sajas.wrapper.ContainerController;
 import spaces.Space;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
-import uchicago.src.sim.gui.*;
-import uchicago.src.sim.network.DefaultDrawableNode;
+import uchicago.src.sim.gui.ColorMap;
+import uchicago.src.sim.gui.DisplaySurface;
+import uchicago.src.sim.gui.Object2DDisplay;
+import uchicago.src.sim.gui.Value2DDisplay;
 import uchicago.src.sim.space.Object2DGrid;
 
 import java.awt.*;
@@ -104,7 +105,7 @@ public class AGVSajasModel extends Repast3Launcher {
 	private void launchAgents() {
 		try {
 
-			agvAgents = new ArrayList<AGVAgent>();
+			/*agvAgents = new ArrayList<AGVAgent>();
 			// create agv's
 			// agv agents
 			for (int i = 0; i < num_agv_agents; i++) {
@@ -112,9 +113,10 @@ public class AGVSajasModel extends Repast3Launcher {
 				String name = "Agent: "+agv.getID();
 				agvAgents.add(agv);
 				agentsContainer.acceptNewAgent(name, agv).start();
-			}
+			}*/
+
 			// machines agents
-			/*String pattern = "\\p{Punct}\\d+(\\p{Punct}\\d+)*\\p{Punct}";
+			String pattern = "\\p{Punct}\\d+(\\p{Punct}\\d+)*\\p{Punct}";
 			Pattern r = Pattern.compile(pattern);
 			Matcher m = r.matcher(machines_and_phases);
 			if (m.matches()) {
@@ -125,15 +127,17 @@ public class AGVSajasModel extends Repast3Launcher {
 			}
 			String[] phases = machines_and_phases.split("\\p{Punct}");
 
+			System.out.println("BEFORE THE CYCLES - GOING TO CREATE MACHINES");
 			for(int i = 1; i < phases.length;i++){
 				int num_machines = Integer.parseInt(phases[i]);
+				System.out.println("ON FASE " + i + " WITH MACHINES: " + num_machines);
 				for(int x = 1; x <= num_machines;x++){
-					MachineAgent machine = new MachineAgent(i,x,machines_max_capacity,machines_speed);
-					String name = "Agent: "+machine.getID();
+					MachineAgent machine = new MachineAgent(i, x, machines_max_capacity, machines_speed);
+					String name = "Agent: " + machine.getID();
 					machineAgents.add(machine);
 					agentsContainer.acceptNewAgent(name, machine).start();
 				}
-			}*/
+			}
 			//END machines agents
 
 		} catch (StaleProxyException e) {

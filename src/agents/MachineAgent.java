@@ -29,7 +29,7 @@ public class MachineAgent extends Agent implements Drawable{
     private int x, y;
     private int potential;
     private int lotsProducing;
-    private int timeToFinishLot = 10/velocity;
+    private int timeToFinishLot;
 
     private int processingStep;
     private int stepID;
@@ -52,11 +52,12 @@ public class MachineAgent extends Agent implements Drawable{
         this.capacity = cap;
         this.velocity = vel;
         this.maintenance = false;
-        this.x = x;
-        this.y = y;
+        //this.x = x;
+        //this.y = y;
         this.lotsProducing = 0;
         this.potential = (1/cap) * (1/vel);
-        this.timeToFinishLot = 0;
+
+        timeToFinishLot = 10/velocity;
     }
 
     public MachineAgent(){
@@ -109,7 +110,7 @@ public class MachineAgent extends Agent implements Drawable{
         dfd.addProtocols(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         ServiceDescription sd = new ServiceDescription();
         sd.setName(getLocalName() + "-machine");
-        sd.setType("machine-" + stepID);
+        sd.setType("machine-" + processingStep);
         dfd.addServices(sd);
         try {
             DFService.register(this, dfd);
@@ -295,7 +296,7 @@ public class MachineAgent extends Agent implements Drawable{
     }
 
     public String getID() {
-        return processingStep+"."+stepID;
+        return processingStep + "." + stepID;
     }
 
     /**
