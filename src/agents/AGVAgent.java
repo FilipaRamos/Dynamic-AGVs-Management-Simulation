@@ -47,12 +47,12 @@ public class AGVAgent extends Agent implements Drawable {
     /**
      * Set the move vector
      */
-    public AGVAgent(){
+    public AGVAgent(int power){
         this.maxCapacity=3;
         this.currentCapacity=0;
         this.x=-1;
         this.y=-1;
-        this.power=100;
+        this.power=power;
         setVxVy();
         IDNumber++;
         ID = IDNumber;
