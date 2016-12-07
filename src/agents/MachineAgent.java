@@ -7,7 +7,8 @@ import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import sajas.core.Agent;
-import sajas.core.behaviours.FSMBehaviour;
+import sajas.core.behaviours.CyclicBehaviour;
+import sajas.core.behaviours.SequentialBehaviour;
 import sajas.core.behaviours.SimpleBehaviour;
 import sajas.domain.DFService;
 import sajas.proto.ContractNetInitiator;
@@ -30,6 +31,7 @@ public class MachineAgent extends Agent implements Drawable{
     private double potential;
     private int lotsProducing;
     private int timeToFinishLot;
+    private boolean lotProduced = false;
 
     private int processingStep;
     private int stepID;
@@ -146,7 +148,7 @@ public class MachineAgent extends Agent implements Drawable{
         cfp.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         cfp.setContent(" Do you want the lot? ;)");
 
-        /*SequentialBehaviour sb = new SequentialBehaviour(){
+        SequentialBehaviour sb = new SequentialBehaviour(){
             public int onEnd() {
                 reset();
                 myAgent.addBehaviour(this);
@@ -154,32 +156,16 @@ public class MachineAgent extends Agent implements Drawable{
             }
         };
         sb.addSubBehaviour(new LotProcessingBehaviour());
-        sb.addSubBehaviour(new InitContractNetMachineBehaviour(this, cfp));*/
+        sb.addSubBehaviour(new InitContractNetMachineBehaviour(this, cfp));
 
-        FSMBehaviour fms = new FSMBehaviour(this);
-        fms.registerFirstState(new LotProcessingBehaviour(), PROCESS);
-        fms.registerState(new InitContractNetMachineBehaviour(this, cfp), NEGOTIATE_MACHINE);
-        fms.registerTransition(PROCESS, NEGOTIATE_MACHINE, 1);
-        fms.registerTransition(NEGOTIATE_MACHINE, PROCESS, 2);
-
-        // AGV CONTRACT
-        //AID bestProposer = initContract.bestProposer;
-        //initContractAGV.setBestProposer(bestProposer);
-        //sb.addSubBehaviour(initContractAGV);
-
+        // responder of a agv machine request
+        MessageTemplate t = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+        AGVInteraction agvInteraction = new AGVInteraction(t);
 
         // cycle: process->negotiate machine->negotiate transport
-        this.addBehaviour(fms);
+        this.addBehaviour(sb);
         this.addBehaviour(responderContract);
-        // receive lots
-        /*parallel.addSubBehaviour(new sajas.core.behaviours.OneShotBehaviour() {
-            @Override
-            public void action() {
-                lotsProducing++;
-            }
-        });*/
-        // respond to negotiation requests
-
+        this.addBehaviour(agvInteraction);
 
     }
 
@@ -230,24 +216,24 @@ public class MachineAgent extends Agent implements Drawable{
         @Override
         public void action() {
 
-            System.out.println("LOT PROCESSING --- " + myAgent.getAID());
-
             // if there are lots to process
-            if(lotsProducing > 0) {
-                System.out.println("Producing lot");
+            if(lotsProducing > 0 && !lotProduced) {
+                System.out.println("[ " + myAgent.getAID() +  "] Producing lot");
                 // if the lot is not finished processing
                 if (timeToFinishLot > 0) {
                     decrementTimeLot();
                     int print = timeToFinishLot+1;
-                    System.out.println("Decrementing lot time. Goes from " + print + " to " + timeToFinishLot);
+                    System.out.println("[ " + myAgent.getAID() +  "] Decrementing lot time. Goes from " + print + " to " + timeToFinishLot);
                 } else if (timeToFinishLot == 0) {
-                    System.out.println("Lot finished");
+                    System.out.println("[ " + myAgent.getAID() +  "] Lot finished");
                     // decrement number of lots producing
                     removeLot();
                     // restart the timeToFinishLot variable
                     timeToFinishLot = 10/velocity;
                     // negotiate passage of the lot to another machine
-                    System.out.println("Next behaviour going to launch with lotsLeft: " + lotsProducing + " and timeToFinish: " + timeToFinishLot);
+                    System.out.println("[ " + myAgent.getAID() +  "] lotsLeft: " + lotsProducing + " and timeToFinish: " + timeToFinishLot);
+                    lotProduced = true;
+                    done();
                 }
             }
 
@@ -255,12 +241,9 @@ public class MachineAgent extends Agent implements Drawable{
 
         @Override
         public boolean done() {
-            return true;
-        }
-
-        @Override
-        public int onEnd(){
-            return 1;
+            if(lotProduced)
+                return true;
+            return false;
         }
 
     }
@@ -279,10 +262,9 @@ public class MachineAgent extends Agent implements Drawable{
             System.out.println("Set up of the machine " + a.getName() + " - Contract Net Initiator");
         }
 
-
         @Override
         public Vector prepareCfps(ACLMessage cfp) {
-            if(machines == null) {
+            if (machines == null) {
                 search("machine");
                 for (int i = 0; i < machines.length; i++) {
                     cfp.addReceiver(machines[i]);
@@ -355,7 +337,8 @@ public class MachineAgent extends Agent implements Drawable{
         }
 
         protected void handleInform(ACLMessage inform) {
-            System.out.println("Agent " + inform.getSender() + " successfully performed the requested action");
+            System.out.println(myAgent.getLocalName() + " successfully informed " + inform.getSender());
+            lotProduced = false;
         }
 
     }
@@ -390,15 +373,63 @@ public class MachineAgent extends Agent implements Drawable{
         }
 
         @Override
-        protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
-            System.out.println("--- Agent " + getLocalName() + ": Proposal accepted ---");
-            System.out.println("Agent " + getLocalName() + " will get the lot");
-            return null;
+        protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose, ACLMessage accept) throws FailureException {
+            System.out.println("--- " + getLocalName() + ": Proposal accepted ---");
+            System.out.println(getLocalName() + " will get the lot");
+
+            ACLMessage response = cfp.createReply();
+            response.setPerformative(ACLMessage.INFORM);
+            response.setContent("got it");
+
+            return response;
         }
 
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
             System.out.println("Agent " + getLocalName() + ": Proposal rejected");
         }
+
+    }
+
+    /**
+     * Behaviour to listen for AGV messages (drop lot/request location)
+     */
+    protected class AGVInteraction extends CyclicBehaviour{
+
+        MessageTemplate mt;
+
+        public AGVInteraction(MessageTemplate mt){
+            this.mt = mt;
+        }
+
+        @Override
+        public void action() {
+            ACLMessage msg = myAgent.receive(mt);
+            if (msg != null) {
+                // Message received. Process it
+                if(msg.getContent() == "location")
+                    myAgent.send(requestLocation(msg));
+                else
+                    myAgent.send(requestLotPassage(msg));
+            }
+        }
+
+        protected ACLMessage requestLocation(ACLMessage msg){
+            ACLMessage reply = msg.createReply();
+            reply.setPerformative(ACLMessage.INFORM);
+            reply.setContent(x + "-" + y);
+
+            return reply;
+        }
+        protected ACLMessage requestLotPassage(ACLMessage msg){
+            lotsProducing++;
+
+            ACLMessage reply = msg.createReply();
+            reply.setPerformative(ACLMessage.INFORM);
+            reply.setContent("ok");
+
+            return reply;
+        }
+
 
     }
 

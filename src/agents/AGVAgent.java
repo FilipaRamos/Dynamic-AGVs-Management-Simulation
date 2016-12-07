@@ -8,7 +8,6 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import sajas.core.Agent;
 import sajas.core.behaviours.CyclicBehaviour;
-import sajas.core.behaviours.ParallelBehaviour;
 import sajas.domain.DFService;
 import sajas.proto.ContractNetResponder;
 import spaces.Space;
@@ -70,7 +69,7 @@ public class AGVAgent extends Agent implements Drawable {
         ID = IDNumber;
 
         machinesLocations = new ArrayList();
-        machines = new AID[]{};
+        machines = null;
     }
 
     /**
@@ -123,11 +122,11 @@ public class AGVAgent extends Agent implements Drawable {
         ResponderContractNetBehaviour proposals = new ResponderContractNetBehaviour(this, template);
 
         AGVHandlerBehaviour handler = new AGVHandlerBehaviour();
+        MachineComHandlerBehaviour machineComunication = new MachineComHandlerBehaviour();
 
-        ParallelBehaviour pb = new ParallelBehaviour();
-
-        pb.addSubBehaviour(proposals);
-        pb.addSubBehaviour(handler);
+        addBehaviour(proposals);
+        addBehaviour(handler);
+        addBehaviour(machineComunication);
 
     }
 
@@ -150,6 +149,28 @@ public class AGVAgent extends Agent implements Drawable {
         catch (FIPAException fe) {
             fe.printStackTrace();
         }
+
+    }
+
+    protected class MachineComHandlerBehaviour extends CyclicBehaviour{
+
+        public MachineComHandlerBehaviour(){
+        }
+
+        @Override
+        public void action() {
+            machineLocationScout();
+        }
+
+        protected void machineLocationScout() {
+
+            for (int i = 0; i < machines.length; i++) {
+                ACLMessage request = new ACLMessage(ACLMessage.REQUEST);
+                request.setContent("location");
+                send(request);
+            }
+        }
+
 
     }
 
@@ -292,7 +313,8 @@ public class AGVAgent extends Agent implements Drawable {
         public ResponderContractNetBehaviour(Agent a, MessageTemplate mt) {
             super(a, mt);
             System.out.println("Set up of the machine " + a.getName() + " - Contract Net Responder");
-            search();
+            if(machines == null)
+                search();
         }
 
         @Override
@@ -349,7 +371,7 @@ public class AGVAgent extends Agent implements Drawable {
             if(requests.size() > 0) {
                 // evaluate energy
                 // handle move
-                // handle delivery
+                // handle delivery -> send REQUEST message to machine
             }
         }
     }

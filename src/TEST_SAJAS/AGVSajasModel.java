@@ -131,8 +131,10 @@ public class AGVSajasModel extends Repast3Launcher {
 				System.out.println("ON FASE " + i + " WITH MACHINES: " + num_machines);
 				for(int x = 1; x <= num_machines;x++){
 					MachineAgent machine = null;
-					if(i == 2 && x == 2)
-						machine = new MachineAgent(i, x, 10, 10, 50, 10);
+					if(i == 3 && x == 1)
+						machine = new MachineAgent(i, x, 18, 7, 50, 10);
+					else if(i == 2 && x == 2)
+						machine = new MachineAgent(i, x, 5, 5, 50, 10);
 					else
 						machine = new MachineAgent(i, x, 10, 10, machines_max_capacity, machines_speed);
 					if(i == 1 && x == 1)
