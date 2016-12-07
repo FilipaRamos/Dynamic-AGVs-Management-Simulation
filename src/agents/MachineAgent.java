@@ -7,9 +7,7 @@ import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import sajas.core.Agent;
-import sajas.core.behaviours.CyclicBehaviour;
-import sajas.core.behaviours.ParallelBehaviour;
-import sajas.core.behaviours.SequentialBehaviour;
+import sajas.core.behaviours.FSMBehaviour;
 import sajas.core.behaviours.SimpleBehaviour;
 import sajas.domain.DFService;
 import sajas.proto.ContractNetInitiator;
@@ -21,8 +19,6 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.Vector;
 
@@ -31,7 +27,7 @@ public class MachineAgent extends Agent implements Drawable{
     private int velocity;
     private boolean maintenance;
     private int x, y;
-    private int potential;
+    private double potential;
     private int lotsProducing;
     private int timeToFinishLot;
 
@@ -44,7 +40,8 @@ public class MachineAgent extends Agent implements Drawable{
     // AID of the machines of the next fase
     private AID[] machines;
 
-    public InitContractNetMachineBehaviour initContract;
+    private static final String PROCESS = "process";
+    private static final String NEGOTIATE_MACHINE = "negotiate-machine";
 
     /**
      * Constructor of a machine agent
@@ -62,13 +59,16 @@ public class MachineAgent extends Agent implements Drawable{
         this.x = x;
         this.y = y;
         this.lotsProducing = 0;
-        this.potential = (1/cap) * (1/vel);
+        this.potential = ((double)1/(double)cap)*((double)1/(double)vel);
         try {
             image = ImageIO.read(new File("src/pepe.jpg"));
         } catch (IOException e) {
             e.printStackTrace();
         }
         timeToFinishLot = 10/velocity;
+
+        agvs = null;
+        machines = null;
     }
 
     /**
@@ -142,26 +142,44 @@ public class MachineAgent extends Agent implements Drawable{
                 MessageTemplate.MatchPerformative(ACLMessage.CFP) );
         ResponderContractNetMachineBehaviour responderContract = new ResponderContractNetMachineBehaviour(this, template);
 
-        ProductionLine pl = new ProductionLine();
+        ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
+        cfp.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+        cfp.setContent(" Do you want the lot? ;)");
+
+        /*SequentialBehaviour sb = new SequentialBehaviour(){
+            public int onEnd() {
+                reset();
+                myAgent.addBehaviour(this);
+                return super.onEnd();
+            }
+        };
+        sb.addSubBehaviour(new LotProcessingBehaviour());
+        sb.addSubBehaviour(new InitContractNetMachineBehaviour(this, cfp));*/
+
+        FSMBehaviour fms = new FSMBehaviour(this);
+        fms.registerFirstState(new LotProcessingBehaviour(), PROCESS);
+        fms.registerState(new InitContractNetMachineBehaviour(this, cfp), NEGOTIATE_MACHINE);
+        fms.registerTransition(PROCESS, NEGOTIATE_MACHINE, 1);
+        fms.registerTransition(NEGOTIATE_MACHINE, PROCESS, 2);
 
         // AGV CONTRACT
         //AID bestProposer = initContract.bestProposer;
         //initContractAGV.setBestProposer(bestProposer);
         //sb.addSubBehaviour(initContractAGV);
 
-        ParallelBehaviour parallel = new ParallelBehaviour();
 
         // cycle: process->negotiate machine->negotiate transport
-        parallel.addSubBehaviour(pl);
+        this.addBehaviour(fms);
+        this.addBehaviour(responderContract);
         // receive lots
-        parallel.addSubBehaviour(new sajas.core.behaviours.OneShotBehaviour() {
+        /*parallel.addSubBehaviour(new sajas.core.behaviours.OneShotBehaviour() {
             @Override
             public void action() {
                 lotsProducing++;
             }
-        });
+        });*/
         // respond to negotiation requests
-        parallel.addSubBehaviour(responderContract);
+
 
     }
 
@@ -169,7 +187,7 @@ public class MachineAgent extends Agent implements Drawable{
      * Search the DF for the desired agents
      * @param type the type of agents to search
      */
-    protected void search(String type){
+    public void search(String type){
 
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription sd = new ServiceDescription();
@@ -205,35 +223,6 @@ public class MachineAgent extends Agent implements Drawable{
      */
 
     /**
-     * Line of Production
-     */
-    protected class ProductionLine extends CyclicBehaviour {
-
-        @Override
-        public void action() {
-
-            // initiator of a net machine behaviour
-            ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
-            cfp.setReplyByDate(new Date(System.currentTimeMillis() + 10000));
-            //cfp.setContext();
-            //cfp.setType();
-            initContract = new InitContractNetMachineBehaviour(myAgent, cfp);
-
-            // Sequential Behaviour for a lot processing
-            SequentialBehaviour sb = new SequentialBehaviour() {
-                public int onEnd() {
-                    reset();
-                    myAgent.addBehaviour(this);
-                    return super.onEnd();
-                }
-            };
-            sb.addSubBehaviour(new LotProcessingBehaviour());
-            sb.addSubBehaviour(initContract);
-
-        }
-    }
-
-    /**
      * Behaviour of processing lots
      */
     protected class LotProcessingBehaviour extends SimpleBehaviour {
@@ -248,15 +237,17 @@ public class MachineAgent extends Agent implements Drawable{
                 System.out.println("Producing lot");
                 // if the lot is not finished processing
                 if (timeToFinishLot > 0) {
-                    System.out.println("Decrementing lot time");
                     decrementTimeLot();
+                    int print = timeToFinishLot+1;
+                    System.out.println("Decrementing lot time. Goes from " + print + " to " + timeToFinishLot);
                 } else if (timeToFinishLot == 0) {
+                    System.out.println("Lot finished");
                     // decrement number of lots producing
-                    lotsProducing--;
+                    removeLot();
                     // restart the timeToFinishLot variable
                     timeToFinishLot = 10/velocity;
                     // negotiate passage of the lot to another machine
-                    return;
+                    System.out.println("Next behaviour going to launch with lotsLeft: " + lotsProducing + " and timeToFinish: " + timeToFinishLot);
                 }
             }
 
@@ -266,6 +257,12 @@ public class MachineAgent extends Agent implements Drawable{
         public boolean done() {
             return true;
         }
+
+        @Override
+        public int onEnd(){
+            return 1;
+        }
+
     }
 
     /**
@@ -273,47 +270,34 @@ public class MachineAgent extends Agent implements Drawable{
      */
     protected class InitContractNetMachineBehaviour extends ContractNetInitiator {
 
-        protected ArrayList<AID> receivers;
-        protected int nrReceivers;
         protected AID bestProposer;
 
         public InitContractNetMachineBehaviour(Agent a, ACLMessage cfp) {
             super(a, cfp);
-            receivers = new ArrayList();
-            nrReceivers = 0;
+
             bestProposer = null;
-
             System.out.println("Set up of the machine " + a.getName() + " - Contract Net Initiator");
-
-            setupInit();
         }
 
-        protected void setupInit(){
-            // search the DF for machines
-            search("machine");
-            // search("agv");
 
-            System.out.println("----------- Found machines -------------- ");
-
-            for(int i = 0; i < machines.length; i++){
-                System.out.println("Machine " + machines[i]);
+        @Override
+        public Vector prepareCfps(ACLMessage cfp) {
+            if(machines == null) {
+                search("machine");
+                for (int i = 0; i < machines.length; i++) {
+                    cfp.addReceiver(machines[i]);
+                    System.out.println(machines[i].toString() + " added to " + myAgent.getAID());
+                }
             }
-
-            System.out.println("---------------------------------------- ");
-        }
-
-        // add receiver to the list
-        public void addReceiver(AID receiver){
-            receivers.add(receiver);
-            nrReceivers++;
+            return super.prepareCfps(cfp);
         }
 
         protected void handlePropose(ACLMessage propose, Vector v) {
-            System.out.println("Agent " + propose.getSender().getName() + " proposed " + propose.getContent());
+            System.out.println("Agent " + propose.getSender() + " proposed " + propose.getContent());
         }
 
         protected void handleRefuse(ACLMessage refuse) {
-            System.out.println("Agent " + refuse.getSender().getName() + " refused because it has no more capacity.");
+            System.out.println("Agent " + refuse.getSender() + " refused because it has no more capacity.");
         }
 
         protected void handleFailure(ACLMessage failure) {
@@ -324,20 +308,19 @@ public class MachineAgent extends Agent implements Drawable{
                 System.out.println("Responder does not exist " + myAgent.getAMS());
             }
             else {
-                System.out.println("Agent " + failure.getSender().getName() + " failed");
+                System.out.println("Agent " + failure.getSender() + " failed");
             }
             // Immediate failure --> we will not receive a response from this agent
-            nrReceivers--;
         }
 
         protected void handleAllResponses(Vector responses, Vector acceptances) {
-            if (responses.size() < receivers.size()) {
+            if (responses.size() < machines.length) {
                 // Some responder didn't reply within the specified timeout
-                System.out.println("Timeout expired: missing " + (receivers.size() - responses.size()) + " responses");
+                System.out.println("Timeout expired: missing " + (machines.length - responses.size()) + " responses");
             }
 
             // Evaluate proposals.
-            int bestProposal = 999999;
+            double bestProposal = 999999;
             ACLMessage accept = null;
             Enumeration e = responses.elements();
 
@@ -352,7 +335,7 @@ public class MachineAgent extends Agent implements Drawable{
 
                     acceptances.addElement(reply);
 
-                    int proposal = Integer.parseInt(msg.getContent());
+                    double proposal = Double.parseDouble(msg.getContent());
 
                     if (proposal < bestProposal) {
 
@@ -366,13 +349,13 @@ public class MachineAgent extends Agent implements Drawable{
 
             // Accept the proposal of the best proposer (smallest value of potential)
             if (accept != null) {
-                System.out.println("Accepting proposal " + bestProposal + " from responder " + bestProposer.getName());
+                System.out.println("Accepting proposal " + bestProposal + " from responder " + bestProposer);
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
             }
         }
 
         protected void handleInform(ACLMessage inform) {
-            System.out.println("Agent " + inform.getSender().getName() + " successfully performed the requested action");
+            System.out.println("Agent " + inform.getSender() + " successfully performed the requested action");
         }
 
     }
@@ -389,11 +372,11 @@ public class MachineAgent extends Agent implements Drawable{
 
         @Override
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
-            System.out.println("Agent " + getLocalName() + ": CFP received from " + cfp.getSender().getName() + ". Action is " + cfp.getContent());
+            System.out.println("Agent " + getID() + ": CFP received from " + cfp.getSender() + ". - " + cfp.getContent());
 
             if (capacity > 0) {
                 // We provide a proposal
-                System.out.println("Agent " + getLocalName() + ": Proposing " + potential);
+                System.out.println("Agent " + getAID() + ": Proposing " + potential);
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
                 propose.setContent(String.valueOf(potential));
@@ -401,7 +384,7 @@ public class MachineAgent extends Agent implements Drawable{
             }
             else {
                 // We refuse to provide a proposal because the machine does not have capacity to process another lot
-                System.out.println("Agent " + getLocalName() + ": Refuse");
+                System.out.println("Agent " + getID() + ": Refuse");
                 throw new RefuseException("evaluation-failed");
             }
         }
@@ -481,11 +464,11 @@ public class MachineAgent extends Agent implements Drawable{
         this.x = x;
     }
 
-    public int getPotential() {
+    public double getPotential() {
         return potential;
     }
 
-    public void setPotential(int potential) {
+    public void setPotential(double potential) {
         this.potential = potential;
     }
 

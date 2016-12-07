@@ -12,16 +12,9 @@ import spaces.Space;
 import uchicago.src.sim.engine.BasicAction;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
-import uchicago.src.sim.gui.ColorMap;
 import uchicago.src.sim.gui.DisplaySurface;
 import uchicago.src.sim.gui.Object2DDisplay;
-import uchicago.src.sim.gui.Value2DDisplay;
-import uchicago.src.sim.space.Object2DGrid;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -137,7 +130,13 @@ public class AGVSajasModel extends Repast3Launcher {
 				int num_machines = Integer.parseInt(phases[i]);
 				System.out.println("ON FASE " + i + " WITH MACHINES: " + num_machines);
 				for(int x = 1; x <= num_machines;x++){
-					MachineAgent machine = new MachineAgent(i, x,10,10, machines_max_capacity, machines_speed);
+					MachineAgent machine = null;
+					if(i == 2 && x == 2)
+						machine = new MachineAgent(i, x, 10, 10, 50, 10);
+					else
+						machine = new MachineAgent(i, x, 10, 10, machines_max_capacity, machines_speed);
+					if(i == 1 && x == 1)
+						machine.setLotsProducing(20);
 					String name = "Agent: " + machine.getID();
 					machineAgents.add(machine);
 					agentsContainer.acceptNewAgent(name, machine).start();
@@ -177,10 +176,8 @@ public class AGVSajasModel extends Repast3Launcher {
 		// Register Displays
 		registerDisplaySurface("AGV Model Window 1", displaySurf);
 
-
 		//Build schedule
 		schedule = getSchedule();
-
 
 		System.out.println("Running BuildSchedule");
 		schedule.scheduleActionAtInterval(1, displaySurf, "updateDisplay", Schedule.LAST);
@@ -189,13 +186,11 @@ public class AGVSajasModel extends Repast3Launcher {
 				moveAgent();
 			}
 		}
-		schedule.scheduleActionAtInterval(500,new MoveAgentPEPE());
-
+		schedule.scheduleActionAtInterval(500, new MoveAgentPEPE());
 
 		addSimEventListener(displaySurf);
 		System.out.println("Running BuildDisplay");
 		buildDisplayAgents();
-
 
 		displaySurf.display();
 	}
@@ -232,7 +227,8 @@ public class AGVSajasModel extends Repast3Launcher {
 
 		SimInit init = new SimInit();
 		init.setNumRuns(1);   // works only in batch mode
-		init.loadModel(new AGVSajasModel(runMode), null, runMode);
+		AGVSajasModel model = new AGVSajasModel(runMode);
+		init.loadModel(model, null, runMode);
 	}
 
 
