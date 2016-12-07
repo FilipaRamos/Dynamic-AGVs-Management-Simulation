@@ -148,15 +148,22 @@ public class MachineAgent extends Agent implements Drawable{
         cfp.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         cfp.setContent(" Do you want the lot? ;)");
 
+        InitContractNetMachineBehaviour init = new InitContractNetMachineBehaviour(this, cfp);
+
         SequentialBehaviour sb = new SequentialBehaviour(){
             public int onEnd() {
                 reset();
+
+                removeSubBehaviour(init);
+                InitContractNetMachineBehaviour init = new InitContractNetMachineBehaviour(myAgent, cfp);
+                addSubBehaviour(init);
+
                 myAgent.addBehaviour(this);
                 return super.onEnd();
             }
         };
         sb.addSubBehaviour(new LotProcessingBehaviour());
-        sb.addSubBehaviour(new InitContractNetMachineBehaviour(this, cfp));
+        sb.addSubBehaviour(init);
 
         // responder of a agv machine request
         MessageTemplate t = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);

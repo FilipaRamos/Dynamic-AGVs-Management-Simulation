@@ -31,6 +31,7 @@ public class AGVAgent extends Agent implements Drawable {
     private int maxCapacity;
     private int currentCapacity;
     private int power;
+    private int tick = 50;
 
     // PowerStation Coordinates
     private int powerX;
@@ -40,13 +41,20 @@ public class AGVAgent extends Agent implements Drawable {
     private PriorityQueue<String> requests = new PriorityQueue();
     // location of the machines
     private ArrayList<MachineLocation> machinesLocations;
+    // list of points to visit
+    private ArrayList<Point> points;
 
     // space of the simulation
     private Space space;
     private AID[] machines;
 
+    private Point currentDestiny;
+    private Point[] currentPath;
+
     private static int IDNumber = 0;
     private int ID;
+
+    private Point powerStation;
 
     /**
      * Constructor of an AGV agent
@@ -63,6 +71,7 @@ public class AGVAgent extends Agent implements Drawable {
         this.power=power;
         this.powerX = powerX;
         this.powerY = powerY;
+        powerStation = new Point(powerX, powerY);
 
         setVxVy();
         IDNumber++;
@@ -70,6 +79,9 @@ public class AGVAgent extends Agent implements Drawable {
 
         machinesLocations = new ArrayList();
         machines = null;
+        currentPath = null;
+        currentDestiny = null;
+        points = new ArrayList<>();
     }
 
     /**
@@ -282,6 +294,18 @@ public class AGVAgent extends Agent implements Drawable {
     }
 
     /**
+     * Calculates the distance between 2 positions
+     * @param x1 x coordinate of the first point
+     * @param y1 y coordinate of the first point
+     * @param x2 x coordinate of the second point
+     * @param y2 y coordinate of the second point
+     * @return
+     */
+    private double calculateDistance(int x1, int y1, int x2, int y2){
+        return Math.sqrt((Math.pow((x2 - x1), 2)) + (Math.pow((y2 - y1), 2)));
+    }
+
+    /**
      * Behaviour to respond to a contract Net request
      */
     protected class ResponderContractNetBehaviour extends ContractNetResponder {
@@ -344,12 +368,85 @@ public class AGVAgent extends Agent implements Drawable {
         @Override
         public void action() {
 
-            if(requests.size() > 0) {
-                // evaluate energy
+            if(requests.size() > 0)
+                postRequests();
+
+            if(points.size() > 0) {
+                if(tick == 0){
+                    // if the agv is out of energy, add the path to the powerStation in first place on the list
+                    if(evaluateEnergy()){
+                        updatePoints();
+                        tick = 20;
+                    }
+                }
+
+
                 // handle move
                 // handle delivery -> send REQUEST message to machine
             }
+
+            if(tick >= 0)
+            tick--;
         }
+    }
+
+    public void postRequests(){
+
+        for(int i = 0; i < requests.size(); i++){
+            // pass requests to arraylist of points
+            String[] splitted = requests.poll().split("-");
+            points.add(getPoint(splitted[0]));
+            points.add(getPoint(splitted[1]));
+        }
+
+    }
+
+    public void updatePoints(){
+
+        ArrayList<Point> copy = new ArrayList<>();
+        copy.add(powerStation);
+
+        for(int i = 0; i < points.size(); i++){
+            copy.add(points.get(i));
+        }
+
+        points = copy;
+
+    }
+
+    public Point getPoint(String AID){
+        Point p = null;
+        for(int i = 0; i < machinesLocations.size(); i++){
+            if(machinesLocations.get(i).AID == AID){
+                p = new Point(machinesLocations.get(i).x, machinesLocations.get(i).y);
+            }
+        }
+
+        return p;
+    }
+
+    public void updateCoordinates(Point p){
+        if(x > p.x)
+            x--;
+        else
+            x++;
+        if(y > p.y)
+            y--;
+        else
+            y++;
+    }
+
+    /**
+     * Evaluates the need to go energy recharging
+     */
+    protected boolean evaluateEnergy(){
+
+        double distance = calculateDistance(x, y, powerX, powerY);
+        if(power > distance){
+            return false;
+        }
+        return true;
+
     }
 
     /**
@@ -406,6 +503,18 @@ public class AGVAgent extends Agent implements Drawable {
     public void addMachineLocation(AID machine, int x, int y){
         MachineLocation mc = new MachineLocation(machine.toString(), x, y);
         machinesLocations.add(mc);
+    }
+
+    protected class Point{
+
+        public int x;
+        public int y;
+
+        public Point(int x, int y){
+            this.x = x;
+            this.y = y;
+        }
+
     }
 
     public void setSpace(Space space){
