@@ -63,7 +63,7 @@ public class MachineAgent extends Agent implements Drawable{
         this.lotsProducing = 0;
         this.potential = ((double)1/(double)cap)*((double)1/(double)vel);
         try {
-            image = ImageIO.read(new File("src/pepe.jpg"));
+            image = ImageIO.read(new File("src/machine.jpg"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -484,7 +484,7 @@ public class MachineAgent extends Agent implements Drawable{
 
     @Override
     public void draw(SimGraphics G) {
-        G.drawFastRect(Color.BLUE);
+        G.drawImageToFit(image);
     }
 
     public int getX() {

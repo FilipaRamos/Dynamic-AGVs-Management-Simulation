@@ -106,7 +106,7 @@ public class AGVModel extends SimModelImpl {
         a.setPower(AgvPower);
         a.setCapacity(MaxCapacity);
         agvList.add(a);
-        space.addAGV(a);
+        //space.addAGV(a);
     }
 
     public void buildSchedule(){
