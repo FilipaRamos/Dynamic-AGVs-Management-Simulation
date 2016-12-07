@@ -122,11 +122,9 @@ public class AGVAgent extends Agent implements Drawable {
         ResponderContractNetBehaviour proposals = new ResponderContractNetBehaviour(this, template);
 
         AGVHandlerBehaviour handler = new AGVHandlerBehaviour();
-        MachineComHandlerBehaviour machineComunication = new MachineComHandlerBehaviour();
 
         addBehaviour(proposals);
         addBehaviour(handler);
-        addBehaviour(machineComunication);
 
     }
 
@@ -149,28 +147,6 @@ public class AGVAgent extends Agent implements Drawable {
         catch (FIPAException fe) {
             fe.printStackTrace();
         }
-
-    }
-
-    protected class MachineComHandlerBehaviour extends CyclicBehaviour{
-
-        public MachineComHandlerBehaviour(){
-        }
-
-        @Override
-        public void action() {
-            machineLocationScout();
-        }
-
-        protected void machineLocationScout() {
-
-            for (int i = 0; i < machines.length; i++) {
-                ACLMessage request = new ACLMessage(ACLMessage.REQUEST);
-                request.setContent("location");
-                send(request);
-            }
-        }
-
 
     }
 
@@ -425,6 +401,11 @@ public class AGVAgent extends Agent implements Drawable {
             this.y = y;
         }
 
+    }
+
+    public void addMachineLocation(AID machine, int x, int y){
+        MachineLocation mc = new MachineLocation(machine.toString(), x, y);
+        machinesLocations.add(mc);
     }
 
     public void setSpace(Space space){
