@@ -42,8 +42,10 @@ public class MachineAgent extends Agent implements Drawable{
     // AID of the machines of the next fase
     private AID[] machines;
 
-    private static final String PROCESS = "process";
-    private static final String NEGOTIATE_MACHINE = "negotiate-machine";
+    private boolean lastPhase = false;
+
+    private ACLMessage cfpAGV = new ACLMessage(ACLMessage.CFP);
+    private InitContractNetMachineBehaviour initAGV;
 
     /**
      * Constructor of a machine agent
@@ -61,7 +63,9 @@ public class MachineAgent extends Agent implements Drawable{
         this.x = x;
         this.y = y;
         this.lotsProducing = 0;
+
         this.potential = 1/((double)1/(double)cap)*((double)1/(double)vel);
+
         try {
             image = ImageIO.read(new File("src/machine.jpg"));
         } catch (IOException e) {
@@ -71,6 +75,9 @@ public class MachineAgent extends Agent implements Drawable{
 
         agvs = null;
         machines = null;
+
+        cfpAGV.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+        initAGV = null;
     }
 
     /**
@@ -127,7 +134,10 @@ public class MachineAgent extends Agent implements Drawable{
             System.err.println(e.getMessage());
         }
 
-        setupBehaviours();
+        if(lastPhase)
+            setupProduction();
+        else
+            setupBehaviours();
 
     }
 
@@ -144,35 +154,55 @@ public class MachineAgent extends Agent implements Drawable{
                 MessageTemplate.MatchPerformative(ACLMessage.CFP) );
         ResponderContractNetMachineBehaviour responderContract = new ResponderContractNetMachineBehaviour(this, template);
 
-        ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
-        cfp.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
-        cfp.setContent(" Do you want the lot? ;)");
+        ACLMessage cfpMach = new ACLMessage(ACLMessage.CFP);
+        cfpMach.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+        cfpMach.setContent(" Do you want the lot? ;)");
 
-        InitContractNetMachineBehaviour init = new InitContractNetMachineBehaviour(this, cfp);
+        InitContractNetMachineBehaviour initMachine = new InitContractNetMachineBehaviour(this, cfpMach, "machine");
+        initAGV = new InitContractNetMachineBehaviour(this, cfpAGV, "agv");
 
+        // cycle: process->negotiate machine->negotiate transport
         SequentialBehaviour sb = new SequentialBehaviour(){
             public int onEnd() {
                 reset();
 
-                removeSubBehaviour(init);
-                InitContractNetMachineBehaviour init = new InitContractNetMachineBehaviour(myAgent, cfp);
-                addSubBehaviour(init);
+                removeSubBehaviour(initMachine);
+                removeSubBehaviour(initAGV);
+                InitContractNetMachineBehaviour initMachine = new InitContractNetMachineBehaviour(myAgent, cfpMach, "machine");
+                initAGV = new InitContractNetMachineBehaviour(myAgent, cfpAGV, "agv");
+                addSubBehaviour(initMachine);
+                addSubBehaviour(initAGV);
 
                 myAgent.addBehaviour(this);
                 return super.onEnd();
             }
         };
         sb.addSubBehaviour(new LotProcessingBehaviour());
-        sb.addSubBehaviour(init);
+        sb.addSubBehaviour(initMachine);
+        sb.addSubBehaviour(initAGV);
 
-        // responder of a agv machine request
+        // responder of an agv drop or pickup request
         MessageTemplate t = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
         AGVInteraction agvInteraction = new AGVInteraction(t);
 
-        // cycle: process->negotiate machine->negotiate transport
         this.addBehaviour(sb);
         this.addBehaviour(responderContract);
         this.addBehaviour(agvInteraction);
+
+    }
+
+    protected void setupProduction(){
+
+        System.out.println("---- Setup last phase behaviours ----");
+
+        // responder of a net machine contractor
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
+                MessageTemplate.MatchPerformative(ACLMessage.CFP) );
+        ResponderContractNetMachineBehaviour responderContract = new ResponderContractNetMachineBehaviour(this, template);
+
+        addBehaviour(new LotProcessingBehaviour());
+        addBehaviour(responderContract);
 
     }
 
@@ -256,27 +286,45 @@ public class MachineAgent extends Agent implements Drawable{
     }
 
     /**
-     * Behaviour to initiate a ContractNet
+     * Behaviour to initiate a ContractNet between machines
      */
     protected class InitContractNetMachineBehaviour extends ContractNetInitiator {
 
         protected AID bestProposer;
+        protected String type;
 
-        public InitContractNetMachineBehaviour(Agent a, ACLMessage cfp) {
+        public InitContractNetMachineBehaviour(Agent a, ACLMessage cfp, String type) {
             super(a, cfp);
 
+            this.type = type;
+
             bestProposer = null;
-            System.out.println("Set up of the machine " + a.getName() + " - Contract Net Initiator");
+            if(type.equals("machine"))
+                System.out.println("Set up of the machine " + a.getName() + " - Contract Net Initiator MACHINE");
+            else
+                System.out.println("Set up of the machine " + a.getName() + " - Contract Net Initiator AGV");
         }
 
         @Override
         public Vector prepareCfps(ACLMessage cfp) {
-            if (machines == null) {
-                search("machine");
-                for (int i = 0; i < machines.length; i++) {
-                    cfp.addReceiver(machines[i]);
-                    System.out.println(machines[i].toString() + " added to " + myAgent.getAID());
+            if(type.equals("machine")) {
+                if (machines == null) {
+                    search("machine");
+                    for (int i = 0; i < machines.length; i++) {
+                        cfp.addReceiver(machines[i]);
+                        System.out.println(machines[i].toString() + " added to " + myAgent.getAID());
+                    }
                 }
+            }else if(type.equals("agv")){
+                if (agvs == null) {
+                    search("agv");
+                    for (int i = 0; i < agvs.length; i++) {
+                        cfp.addReceiver(agvs[i]);
+                        System.out.println(agvs[i].toString() + " added to " + myAgent.getAID());
+                    }
+                }
+            }else{
+                System.out.println(myAgent.getLocalName() + " [ERROR] Type not recognized");
             }
             return super.prepareCfps(cfp);
         }
@@ -286,7 +334,7 @@ public class MachineAgent extends Agent implements Drawable{
         }
 
         protected void handleRefuse(ACLMessage refuse) {
-            System.out.println("Agent " + refuse.getSender() + " refused because it has no more capacity.");
+            System.out.println("Agent " + refuse.getSender() + " refused proposal.");
         }
 
         protected void handleFailure(ACLMessage failure) {
@@ -299,16 +347,16 @@ public class MachineAgent extends Agent implements Drawable{
             else {
                 System.out.println("Agent " + failure.getSender() + " failed");
             }
-            // Immediate failure --> we will not receive a response from this agent
         }
 
         protected void handleAllResponses(Vector responses, Vector acceptances) {
-            if (responses.size() < machines.length) {
-                // Some responder didn't reply within the specified timeout
-                System.out.println("Timeout expired: missing " + (machines.length - responses.size()) + " responses");
+            if(type.equals("machine")){
+                handleMachine(responses);
+            }else if(type.equals("agv")){
+                handleAGV(responses);
             }
 
-            // Evaluate proposals.
+            // Evaluate proposals
             double bestProposal = 0;
             ACLMessage accept = null;
             Enumeration e = responses.elements();
@@ -340,12 +388,31 @@ public class MachineAgent extends Agent implements Drawable{
             if (accept != null) {
                 System.out.println("Accepting proposal " + bestProposal + " from responder " + bestProposer);
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                if(type.equals("machine")){
+                    cfpAGV.setContent(bestProposer.toString());
+                    initAGV = new InitContractNetMachineBehaviour(myAgent, cfpAGV, "agv");
+                }
             }
         }
 
         protected void handleInform(ACLMessage inform) {
             System.out.println(myAgent.getLocalName() + " successfully informed " + inform.getSender());
-            lotProduced = false;
+            if (type.equals("agv"))
+                lotProduced = false;
+        }
+
+        protected void handleMachine(Vector responses){
+            if (responses.size() < machines.length) {
+                // Some responder didn't reply within the specified timeout
+                System.out.println("Timeout expired: missing " + (machines.length - responses.size()) + " responses");
+            }
+        }
+
+        protected void handleAGV(Vector responses){
+            if (responses.size() < agvs.length) {
+                // Some responder didn't reply within the specified timeout
+                System.out.println("Timeout expired: missing " + (agvs.length - responses.size()) + " responses");
+            }
         }
 
     }
@@ -459,6 +526,10 @@ public class MachineAgent extends Agent implements Drawable{
     /**
      * Get and set methods
      */
+
+    public void setPhase(){
+        lastPhase = true;
+    }
 
     public int getCapacity() {
         return capacity;
