@@ -43,6 +43,8 @@ public class AGVAgent extends Agent implements Drawable {
     private ArrayList<MachineLocation> machinesLocations;
     // list of points to visit
     private ArrayList<Point> points;
+    private ArrayList<Point> dropPoints;
+    private ArrayList<Point> pickupPoints;
 
     // space of the simulation
     private Space space;
@@ -64,14 +66,14 @@ public class AGVAgent extends Agent implements Drawable {
      * @param maxCapacity maximum capacity of transport
      */
     public AGVAgent(int x,int y,int power,int maxCapacity, int powerX, int powerY){
-        this.maxCapacity=maxCapacity;
-        this.currentCapacity=0;
+        this.maxCapacity = maxCapacity;
+        this.currentCapacity = 0;
         this.x=x;
         this.y=y;
         this.power=power;
         this.powerX = powerX;
         this.powerY = powerY;
-        powerStation = new Point(powerX, powerY);
+        powerStation = new Point(powerX, powerY, "power");
 
         setVxVy();
         IDNumber++;
@@ -82,6 +84,8 @@ public class AGVAgent extends Agent implements Drawable {
         currentPath = null;
         currentDestiny = null;
         points = new ArrayList<>();
+        dropPoints = new ArrayList<>();
+        pickupPoints = new ArrayList<>();
     }
 
     /**
@@ -135,7 +139,7 @@ public class AGVAgent extends Agent implements Drawable {
 
         AGVHandlerBehaviour handler = new AGVHandlerBehaviour();
 
-        addBehaviour(proposals);
+        //addBehaviour(proposals);
         addBehaviour(handler);
 
     }
@@ -256,9 +260,9 @@ public class AGVAgent extends Agent implements Drawable {
         MachineLocation mlEnd = null;
 
         for(int i = 0; i < machinesLocations.size(); i++){
-            if(machinesLocations.get(i).AID == start)
+            if(machinesLocations.get(i).aid.toString() == start)
                 mlStart = machinesLocations.get(i);
-            if(machinesLocations.get(i).AID == end)
+            if(machinesLocations.get(i).aid.toString() == end)
                 mlEnd = machinesLocations.get(i);
 
         }
@@ -281,7 +285,7 @@ public class AGVAgent extends Agent implements Drawable {
         MachineLocation location = null;
 
         for(int i = 0; i < machinesLocations.size(); i++){
-            if(machinesLocations.get(i).AID == point)
+            if(machinesLocations.get(i).aid.toString() == point)
                 location = machinesLocations.get(i);
         }
 
@@ -365,6 +369,8 @@ public class AGVAgent extends Agent implements Drawable {
      */
     protected class AGVHandlerBehaviour extends CyclicBehaviour{
 
+        private boolean charging = false;
+
         @Override
         public void action() {
 
@@ -373,34 +379,69 @@ public class AGVAgent extends Agent implements Drawable {
 
             if(points.size() > 0) {
                 if(tick == 0){
-                    // if the agv is out of energy, add the path to the powerStation in first place on the list
+                    // it's at the destination
+                    if(x == points.get(0).x && y == points.get(0).y){
+                        // it's a delivery point
+                        if(points.get(0).type == "drop"){
+                            currentCapacity--;
+                            dropRequest(points.get(0));
+                        }
+                        //it's a pickup location
+                        else if(points.get(0).type == "pickup"){
+                            currentCapacity++;
+                        }
+                        // it's the power station
+                        else if(points.get(0).type == "power"){
+                            charging = true;
+                        }
+                        points.remove(0);
+                    }
+                    // if the agv is out of energy, add the path to the powerStation to the first place on the list
                     if(evaluateEnergy()){
                         updatePoints();
                         tick = 20;
                     }
+                    // update coordinates on the movement to the next destination
+                    updateCoordinates(points.get(0));
                 }
-
 
                 // handle move
                 // handle delivery -> send REQUEST message to machine
             }
 
-            if(tick >= 0)
-            tick--;
+            if(charging){
+                tick = 80;
+                charging = false;
+            }else {
+                if (tick > 0)
+                    tick--;
+                else
+                    tick = 50;
+            }
         }
     }
 
+    /**
+     * Makes a list of points to visit from the request queue
+     */
     public void postRequests(){
 
         for(int i = 0; i < requests.size(); i++){
             // pass requests to arraylist of points
             String[] splitted = requests.poll().split("-");
-            points.add(getPoint(splitted[0]));
-            points.add(getPoint(splitted[1]));
+            Point pickup = getPoint(splitted[0]);
+            pickup.type = "pickup";
+            Point drop = getPoint(splitted[1]);
+            pickup.type = "drop";
+            points.add(pickup);
+            points.add(drop);
         }
 
     }
 
+    /**
+     * Update the list of points to visit based on the requests queue
+     */
     public void updatePoints(){
 
         ArrayList<Point> copy = new ArrayList<>();
@@ -414,17 +455,26 @@ public class AGVAgent extends Agent implements Drawable {
 
     }
 
+    /**
+     * Get the point location of the object
+     * @param AID of the object
+     * @return point location
+     */
     public Point getPoint(String AID){
         Point p = null;
         for(int i = 0; i < machinesLocations.size(); i++){
-            if(machinesLocations.get(i).AID == AID){
-                p = new Point(machinesLocations.get(i).x, machinesLocations.get(i).y);
+            if(machinesLocations.get(i).aid.toString() == AID){
+                p = new Point(machinesLocations.get(i).x, machinesLocations.get(i).y, null);
             }
         }
 
         return p;
     }
 
+    /**
+     * Update the AGV coordinates on movement
+     * @param p point of destination
+     */
     public void updateCoordinates(Point p){
         if(x > p.x)
             x--;
@@ -434,6 +484,57 @@ public class AGVAgent extends Agent implements Drawable {
             y--;
         else
             y++;
+    }
+
+    /**
+     * Process a drop action
+     * @param p
+     */
+    protected boolean dropRequest(Point p){
+
+        AID toSend = getPointAID(p);
+
+        if(toSend != null) {
+            ACLMessage request = new ACLMessage(ACLMessage.REQUEST);
+            request.setContent("request");
+            request.addReceiver(toSend);
+
+            send(request);
+
+            MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                    MessageTemplate.MatchSender(toSend));
+            ACLMessage reception = blockingReceive(mt);
+
+            if(reception != null){
+                if(reception.getContent() == "ok"){
+                    currentCapacity--;
+                    return true;
+                }
+            }
+            return false;
+
+        }else{
+            System.out.println("AID not found!!! Point does not correspond to a machine");
+            return false;
+        }
+
+    }
+
+    /**
+     * Get AID of the object on that point
+     * @param p point
+     * @return AID of the object
+     */
+    protected AID getPointAID(Point p){
+
+        for(int i = 0; i < machinesLocations.size(); i++){
+            if(machinesLocations.get(i).x == p.x && machinesLocations.get(i).y == p.y){
+                return machinesLocations.get(i).aid;
+            }
+        }
+
+        return null;
+
     }
 
     /**
@@ -488,12 +589,12 @@ public class AGVAgent extends Agent implements Drawable {
      */
     protected class MachineLocation{
 
-        public String AID;
+        public AID aid;
         public int x;
         public int y;
 
-        public MachineLocation(String AID, int x, int y){
-            this.AID = AID;
+        public MachineLocation(AID aid, int x, int y){
+            this.aid = aid;
             this.x = x;
             this.y = y;
         }
@@ -501,7 +602,7 @@ public class AGVAgent extends Agent implements Drawable {
     }
 
     public void addMachineLocation(AID machine, int x, int y){
-        MachineLocation mc = new MachineLocation(machine.toString(), x, y);
+        MachineLocation mc = new MachineLocation(machine, x, y);
         machinesLocations.add(mc);
     }
 
@@ -509,10 +610,12 @@ public class AGVAgent extends Agent implements Drawable {
 
         public int x;
         public int y;
+        public String type;
 
-        public Point(int x, int y){
+        public Point(int x, int y, String type){
             this.x = x;
             this.y = y;
+            this.type = type;
         }
 
     }
