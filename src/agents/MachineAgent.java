@@ -61,7 +61,7 @@ public class MachineAgent extends Agent implements Drawable{
         this.x = x;
         this.y = y;
         this.lotsProducing = 0;
-        this.potential = ((double)1/(double)cap)*((double)1/(double)vel);
+        this.potential = 1/((double)1/(double)cap)*((double)1/(double)vel);
         try {
             image = ImageIO.read(new File("src/machine.jpg"));
         } catch (IOException e) {
@@ -309,7 +309,7 @@ public class MachineAgent extends Agent implements Drawable{
             }
 
             // Evaluate proposals.
-            double bestProposal = 999999;
+            double bestProposal = 0;
             ACLMessage accept = null;
             Enumeration e = responses.elements();
 
@@ -326,7 +326,7 @@ public class MachineAgent extends Agent implements Drawable{
 
                     double proposal = Double.parseDouble(msg.getContent());
 
-                    if (proposal < bestProposal) {
+                    if (proposal > bestProposal) {
 
                         bestProposal = proposal;
                         bestProposer = msg.getSender();
@@ -364,8 +364,10 @@ public class MachineAgent extends Agent implements Drawable{
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
             System.out.println("Agent " + getID() + ": CFP received from " + cfp.getSender() + ". - " + cfp.getContent());
 
-            if (capacity > 0) {
+            // if the machine still has capacity
+            if ((capacity-lotsProducing) > 0) {
                 // We provide a proposal
+                updatePotential();
                 System.out.println("Agent " + getAID() + ": Proposing " + potential);
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
@@ -412,32 +414,31 @@ public class MachineAgent extends Agent implements Drawable{
         public void action() {
             ACLMessage msg = myAgent.receive(mt);
             if (msg != null) {
+                System.out.println(myAgent.getLocalName() + " received REQUEST FROM " + msg.getSender() + " with " + msg.getContent());
+
                 // Message received. Process it
-                if(msg.getContent() == "location")
-                    myAgent.send(requestLocation(msg));
-                else
-                    myAgent.send(requestLotPassage(msg));
+                if(msg.getContent().equals("pickup"))
+                    requestLotPickup();
+                else if(msg.getContent().equals("drop"))
+                    requestLotDrop();
             }
         }
 
-        protected ACLMessage requestLocation(ACLMessage msg){
-            ACLMessage reply = msg.createReply();
-            reply.setPerformative(ACLMessage.INFORM);
-            reply.setContent(x + "-" + y);
-
-            return reply;
+        protected void requestLotPickup(){
+            lotsProducing--;
         }
-        protected ACLMessage requestLotPassage(ACLMessage msg){
+        protected void requestLotDrop(){
             lotsProducing++;
-
-            ACLMessage reply = msg.createReply();
-            reply.setPerformative(ACLMessage.INFORM);
-            reply.setContent("ok");
-
-            return reply;
         }
 
 
+    }
+
+    /**
+     * Update the potential value
+     */
+    protected void updatePotential(){
+        potential = 1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity);
     }
 
     /**

@@ -14,11 +14,8 @@ import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
 import uchicago.src.sim.gui.DisplaySurface;
 import uchicago.src.sim.gui.Object2DDisplay;
-import uchicago.src.sim.space.Object2DGrid;
 
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class AGVSajasModel extends Repast3Launcher {
 
@@ -144,14 +141,34 @@ public class AGVSajasModel extends Repast3Launcher {
 			// agv agents
 			for (int i = 0; i < 5; i++) {
 				//AGVAgent agv = new AGVAgent(agv_power);
-				AGVAgent agv = new AGVAgent(3+i,3,50,50,0,0);
-				String name = "Agent: "+agv.getID();
+				AGVAgent agv = new AGVAgent( 3+i, 3, 100, 50, 0, 0);
+				String name = "Agent: " + agv.getID();
 				for(int x = 0; x < machineAgents.size();x++){
 					agv.addMachineLocation(machineAgents.get(x).getAID(),machineAgents.get(x).getX(),machineAgents.get(x).getY());
 				}
 				agvAgents.add(agv);
 				agentsContainer.acceptNewAgent(name, agv).start();
 			}
+
+			agvAgents.get(0).addRequest(machineAgents.get(0).getAID() + "&" + machineAgents.get(3).getAID());
+            agvAgents.get(0).addRequest(machineAgents.get(3).getAID() + "&" + machineAgents.get(5).getAID());
+            agvAgents.get(0).addRequest(machineAgents.get(1).getAID() + "&" + machineAgents.get(2).getAID());
+			agvAgents.get(0).addRequest(machineAgents.get(2).getAID() + "&" + machineAgents.get(4).getAID());
+
+            agvAgents.get(1).addRequest(machineAgents.get(0).getAID() + "&" + machineAgents.get(2).getAID());
+            agvAgents.get(1).addRequest(machineAgents.get(1).getAID() + "&" + machineAgents.get(3).getAID());
+
+            agvAgents.get(2).addRequest(machineAgents.get(2).getAID() + "&" + machineAgents.get(5).getAID());
+            agvAgents.get(2).addRequest(machineAgents.get(3).getAID() + "&" + machineAgents.get(4).getAID());
+            agvAgents.get(2).addRequest(machineAgents.get(1).getAID() + "&" + machineAgents.get(2).getAID());
+
+            agvAgents.get(3).addRequest(machineAgents.get(3).getAID() + "&" + machineAgents.get(5).getAID());
+            agvAgents.get(3).addRequest(machineAgents.get(1).getAID() + "&" + machineAgents.get(4).getAID());
+
+            agvAgents.get(4).addRequest(machineAgents.get(3).getAID() + "&" + machineAgents.get(4).getAID());
+            agvAgents.get(4).addRequest(machineAgents.get(2).getAID() + "&" + machineAgents.get(3).getAID());
+            agvAgents.get(4).addRequest(machineAgents.get(2).getAID() + "&" + machineAgents.get(5).getAID());
+
 
 		} catch (StaleProxyException e) {
 			e.printStackTrace();
@@ -166,7 +183,7 @@ public class AGVSajasModel extends Repast3Launcher {
 		super.begin();
 		System.out.println("BEGIN!");
 		if(!runInBatchMode) {
-			System.out.println("asdasd");
+			System.out.println("!SETUP!");
 			buildAndScheduleDisplay();
 		}
 
@@ -191,15 +208,13 @@ public class AGVSajasModel extends Repast3Launcher {
 		System.out.println("Running BuildSchedule");
 		schedule.scheduleActionAtInterval(1, displaySurf, "updateDisplay", Schedule.LAST);
 
-
 		class MoveAgentPEPE extends BasicAction {
 			public void execute(){
 				moveAgent();
 			}
 		}
 
-
-		schedule.scheduleActionAtInterval(50, new MoveAgentPEPE());
+		//schedule.scheduleActionAtInterval(50, new MoveAgentPEPE());
 
 		addSimEventListener(displaySurf);
 		System.out.println("Running BuildDisplay");
@@ -322,32 +337,38 @@ public class AGVSajasModel extends Repast3Launcher {
 	private void CREATE_HARDCODED_MACHIES() {
 
 		try {//INFO int processID, int stepID,int x,int y, int cap, int vel
-			MachineAgent machine0 = new MachineAgent(1, 1, 10, 7, 50, 10);
+			MachineAgent machine0 = new MachineAgent(1, 1, 10, 8, 50, 10);
+            machine0.setLotsProducing(20);
 			String name0 = "Agent: " + machine0.getID();
 			machineAgents.add(machine0);
 			agentsContainer.acceptNewAgent(name0, machine0).start();
 
-			MachineAgent machine1 = new MachineAgent(1, 2, 10, 12, 45, 7);
+			MachineAgent machine1 = new MachineAgent(1, 2, 10, 14, 45, 7);
+            machine0.setLotsProducing(18);
 			String name1 = "Agent: " + machine1.getID();
 			machineAgents.add(machine1);
 			agentsContainer.acceptNewAgent(name1, machine1).start();
 
-			MachineAgent machine2 = new MachineAgent(2, 1, 12, 7, 70, 11);
+			MachineAgent machine2 = new MachineAgent(2, 1, 15, 8, 70, 11);
+            machine0.setLotsProducing(15);
 			String name2 = "Agent: " + machine2.getID();
 			machineAgents.add(machine2);
 			agentsContainer.acceptNewAgent(name2, machine2).start();
 
-			MachineAgent machine3 = new MachineAgent(2, 2, 12, 12, 33, 11);
+			MachineAgent machine3 = new MachineAgent(2, 2, 15, 14, 33, 11);
+            machine0.setLotsProducing(20);
 			String name3 = "Agent: " + machine3.getID();
 			machineAgents.add(machine3);
 			agentsContainer.acceptNewAgent(name3, machine3).start();
 
-			MachineAgent machine4 = new MachineAgent(3, 1, 16, 7, 15, 15);
+			MachineAgent machine4 = new MachineAgent(3, 1, 20, 8, 15, 15);
+            machine0.setLotsProducing(5);
 			String name4 = "Agent: " + machine4.getID();
 			machineAgents.add(machine4);
 			agentsContainer.acceptNewAgent(name4, machine4).start();
 
-			MachineAgent machine5 = new MachineAgent(3, 2, 16, 12, 23, 6);
+			MachineAgent machine5 = new MachineAgent(3, 2, 20, 14, 23, 6);
+            machine0.setLotsProducing(3);
 			String name5 = "Agent: " + machine5.getID();
 			machineAgents.add(machine5);
 			agentsContainer.acceptNewAgent(name5, machine5).start();

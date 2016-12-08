@@ -10,7 +10,6 @@ import sajas.core.Agent;
 import sajas.core.behaviours.CyclicBehaviour;
 import sajas.domain.DFService;
 import sajas.proto.ContractNetResponder;
-import spaces.Space;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
@@ -19,7 +18,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.PriorityQueue;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * Created by danie on 03/12/2016.
@@ -32,6 +32,7 @@ public class AGVAgent extends Agent implements Drawable {
     private int maxCapacity;
     private int currentCapacity;
     private int power;
+    private int initialPower;
     private Image image;
     private int tick = 50;
 
@@ -40,7 +41,7 @@ public class AGVAgent extends Agent implements Drawable {
     private int powerY;
 
     // queue of requests
-    private PriorityQueue<String> requests = new PriorityQueue();
+    private Queue<String> requests = new LinkedList<String>();
     // location of the machines
     private ArrayList<MachineLocation> machinesLocations;
     // list of points to visit
@@ -72,6 +73,7 @@ public class AGVAgent extends Agent implements Drawable {
         this.x=x;
         this.y=y;
         this.power=power;
+        initialPower = power;
         this.powerX = powerX;
         this.powerY = powerY;
         powerStation = new Point(powerX, powerY, "power");
@@ -110,6 +112,9 @@ public class AGVAgent extends Agent implements Drawable {
      * Setup the agent
      */
     public void setup() {
+
+        System.out.println("Setup " + getLocalName());
+        report();
 
         // register provider at DF
         DFAgentDescription dfd = new DFAgentDescription();
@@ -176,9 +181,9 @@ public class AGVAgent extends Agent implements Drawable {
      */
     protected boolean evaluateStep(String newStep){
 
-        PriorityQueue<String> requestsTemp = new PriorityQueue<String>(requests);
+        Queue<String> requestsTemp = new LinkedList<String>(requests);
         requestsTemp.add(newStep);
-        String[] splitStep = newStep.split("-");
+        String[] splitStep = newStep.split("&");
         requestsTemp.add(splitStep[1] + "-station");
 
         double dT = calculateTotalDistance(requestsTemp);
@@ -198,12 +203,12 @@ public class AGVAgent extends Agent implements Drawable {
      * @param requestsTemp the queue of requests
      * @return distance calculated
      */
-    private double calculateTotalDistance(PriorityQueue<String> requestsTemp){
+    private double calculateTotalDistance(Queue<String> requestsTemp){
 
         double totalDist = 0;
 
         for(String request : requestsTemp){
-            String[] splited = request.split("-");
+            String[] splited = request.split("&");
             double currentDist = calculateDistance(splited[0], splited[1]);
             if(currentDist == -1){
                 System.out.println("[ERROR] Distance in between points could not be calculated! - " + splited[0] + "->" + splited[1]);
@@ -220,7 +225,7 @@ public class AGVAgent extends Agent implements Drawable {
      * @param requestsTemp the queue of requests
      * @return distance calculated
      */
-    private double calculateExtraDistance(PriorityQueue<String> requestsTemp){
+    private double calculateExtraDistance(Queue<String> requestsTemp){
 
         ArrayList<String> extra = new ArrayList<>();
         String start = null;
@@ -229,11 +234,11 @@ public class AGVAgent extends Agent implements Drawable {
         int counter = 1;
 
         for(String request : requestsTemp){
-            String[] splited = request.split("-");
+            String[] splited = request.split("&");
             if(counter%2 == 0) {
                 end = splited[0];
                 if(start != end)
-                    extra.add(start + "-" + end);
+                    extra.add(start + "&" + end);
             }
             else {
                 start = splited[1];
@@ -242,7 +247,7 @@ public class AGVAgent extends Agent implements Drawable {
         }
 
         for(int i = 0; i < extra.size(); i++){
-            String[] decomposed = extra.get(i).split("-");
+            String[] decomposed = extra.get(i).split("&");
             double curDist = calculateDistance(decomposed[0], decomposed[1]);
             if(curDist != -1)
                 dExtra += curDist;
@@ -264,9 +269,9 @@ public class AGVAgent extends Agent implements Drawable {
         MachineLocation mlEnd = null;
 
         for(int i = 0; i < machinesLocations.size(); i++){
-            if(machinesLocations.get(i).aid.toString() == start)
+            if(machinesLocations.get(i).aid.toString().equals(start))
                 mlStart = machinesLocations.get(i);
-            if(machinesLocations.get(i).aid.toString() == end)
+            if(machinesLocations.get(i).aid.toString().equals(end))
                 mlEnd = machinesLocations.get(i);
 
         }
@@ -289,7 +294,7 @@ public class AGVAgent extends Agent implements Drawable {
         MachineLocation location = null;
 
         for(int i = 0; i < machinesLocations.size(); i++){
-            if(machinesLocations.get(i).aid.toString() == point)
+            if(machinesLocations.get(i).aid.toString().equals(point))
                 location = machinesLocations.get(i);
         }
 
@@ -320,7 +325,7 @@ public class AGVAgent extends Agent implements Drawable {
 
         public ResponderContractNetBehaviour(Agent a, MessageTemplate mt) {
             super(a, mt);
-            System.out.println("Set up of the machine " + a.getName() + " - Contract Net Responder");
+            System.out.println("Set up of the agv " + a.getName() + " - Contract Net Responder");
             if(machines == null)
                 search();
         }
@@ -358,8 +363,8 @@ public class AGVAgent extends Agent implements Drawable {
         }
 
         protected double calculateCost(String start, String destiny){
-            PriorityQueue<String> requestsTemp = new PriorityQueue<>(requests);
-            requestsTemp.add(start + "-" + destiny);
+            Queue<String> requestsTemp = new LinkedList<>(requests);
+            requestsTemp.add(start + "&" + destiny);
 
             double totalDist = calculateTotalDistance(requestsTemp);
 
@@ -383,30 +388,39 @@ public class AGVAgent extends Agent implements Drawable {
 
             if(points.size() > 0) {
                 if(tick == 0){
+                    //System.out.println("CURRENT LOCATION (" + x + ", " + y + ")");
+                    System.out.println(getLocalName() + " INITIAL CARGO " + currentCapacity);
                     // it's at the destination
                     if(x == points.get(0).x && y == points.get(0).y){
                         // it's a delivery point
-                        if(points.get(0).type == "drop"){
-                            currentCapacity--;
-                            dropRequest(points.get(0));
+                        if(points.get(0).type.equals("drop")){
+                            if(request(points.get(0), "drop"))
+                                currentCapacity--;
                         }
                         //it's a pickup location
-                        else if(points.get(0).type == "pickup"){
-                            currentCapacity++;
+                        else if(points.get(0).type.equals("pickup")){
+                            if(request(points.get(0), "pickup"))
+                                currentCapacity++;
                         }
                         // it's the power station
-                        else if(points.get(0).type == "power"){
+                        else if(points.get(0).type.equals("power")){
                             charging = true;
                         }
                         points.remove(0);
                     }
                     // if the agv is out of energy, add the path to the powerStation to the first place on the list
                     if(evaluateEnergy()){
+                        System.out.println("Going to charge");
                         updatePoints();
-                        tick = 20;
                     }
-                    // update coordinates on the movement to the next destination
-                    updateCoordinates(points.get(0));
+                    if(points.size() > 0) {
+                        if(!charging) {
+                            // update coordinates on the movement to the next destination
+                            updateCoordinates(points.get(0));
+                        }
+                        //System.out.println("NEXT LOCATION (" + x + ", " + y + ")");
+                        System.out.println(getLocalName() + " AFTER CARGO " + currentCapacity);
+                    }
                 }
 
                 // handle move
@@ -414,7 +428,8 @@ public class AGVAgent extends Agent implements Drawable {
             }
 
             if(charging){
-                tick = 80;
+                tick = 500;
+                power = initialPower;
                 charging = false;
             }else {
                 if (tick > 0)
@@ -430,15 +445,17 @@ public class AGVAgent extends Agent implements Drawable {
      */
     public void postRequests(){
 
+        System.out.println(getLocalName() + " POST REQUESTS");
+
         for(int i = 0; i < requests.size(); i++){
             // pass requests to arraylist of points
-            String[] splitted = requests.poll().split("-");
-            Point pickup = getPoint(splitted[0]);
-            pickup.type = "pickup";
-            Point drop = getPoint(splitted[1]);
-            pickup.type = "drop";
+            String[] splitted = requests.poll().split("&");
+            Point pickup = getPoint(splitted[0], "pickup");
+            Point drop = getPoint(splitted[1], "drop");
             points.add(pickup);
+            System.out.println(getLocalName() + " ONE MORE PICKUP : (" + pickup.x + ", " + pickup.y + ")");
             points.add(drop);
+            System.out.println(getLocalName() + " ONE MORE DROP : (" + drop.x + ", " + drop.y + ")");
         }
 
     }
@@ -464,11 +481,12 @@ public class AGVAgent extends Agent implements Drawable {
      * @param AID of the object
      * @return point location
      */
-    public Point getPoint(String AID){
+    public Point getPoint(String AID, String type){
         Point p = null;
+
         for(int i = 0; i < machinesLocations.size(); i++){
-            if(machinesLocations.get(i).aid.toString() == AID){
-                p = new Point(machinesLocations.get(i).x, machinesLocations.get(i).y, null);
+            if(machinesLocations.get(i).aid.toString().equals(AID)){
+                p = new Point(machinesLocations.get(i).x, machinesLocations.get(i).y, type);
             }
         }
 
@@ -482,40 +500,35 @@ public class AGVAgent extends Agent implements Drawable {
     public void updateCoordinates(Point p){
         if(x > p.x)
             x--;
-        else
+        else if (x < p.x)
             x++;
         if(y > p.y)
             y--;
-        else
+        else if (y < p.y)
             y++;
+
+        power--;
     }
 
     /**
-     * Process a drop action
-     * @param p
+     * Send a drop or pickup request to machines upon picking up or delivering a lot
+     * @param p Point of delivery or pickup
+     * @param type type of action
+     * @return true in case the request was sent successfully, false otherwise
      */
-    protected boolean dropRequest(Point p){
+    protected boolean request(Point p, String type){
 
         AID toSend = getPointAID(p);
 
         if(toSend != null) {
             ACLMessage request = new ACLMessage(ACLMessage.REQUEST);
-            request.setContent("request");
+            request.setContent(type);
             request.addReceiver(toSend);
 
             send(request);
 
-            MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                    MessageTemplate.MatchSender(toSend));
-            ACLMessage reception = blockingReceive(mt);
-
-            if(reception != null){
-                if(reception.getContent() == "ok"){
-                    currentCapacity--;
-                    return true;
-                }
-            }
-            return false;
+            System.out.println("Sent REQUEST " + type + " message");
+            return true;
 
         }else{
             System.out.println("AID not found!!! Point does not correspond to a machine");
@@ -550,6 +563,7 @@ public class AGVAgent extends Agent implements Drawable {
         if(power > distance){
             return false;
         }
+        System.out.println("No energy");
         return true;
 
     }
@@ -615,8 +629,8 @@ public class AGVAgent extends Agent implements Drawable {
 
     }
 
-    public void setSpace(Space space){
-        this.space=space;
+    public void addRequest(String request){
+        requests.add(request);
     }
 
     @Override
@@ -687,12 +701,13 @@ public class AGVAgent extends Agent implements Drawable {
      */
     public void report(){
         System.out.println(getID() +
-                " at " +
+                " at (" +
                 x + ", " + y +
-                " has " +
+                "), has " +
                 getPower() + " power" +
                 " and " +
-                getCurrentCapacity() + "/"+ getMaxCapacity() +" capacity and ");//+getRequests().size()+" total Requests");
+                getCurrentCapacity() + "/"+ getMaxCapacity() +" capacity.");//+getRequests().size()+" total Requests");
+
     }
 
     public void setCapacity(int maxCapacity) {
