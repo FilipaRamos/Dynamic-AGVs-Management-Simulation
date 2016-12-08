@@ -14,6 +14,7 @@ import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
 import uchicago.src.sim.gui.DisplaySurface;
 import uchicago.src.sim.gui.Object2DDisplay;
+import uchicago.src.sim.space.Object2DGrid;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -102,19 +103,8 @@ public class AGVSajasModel extends Repast3Launcher {
 	@SuppressWarnings("Duplicates")
 	private void launchAgents() {
 		try {
-
-			/*agvAgents = new ArrayList<AGVAgent>();
-			// create agv's
-			// agv agents
-			for (int i = 0; i < num_agv_agents; i++) {
-				AGVAgent agv = new AGVAgent(agv_power);
-				String name = "Agent: "+agv.getID();
-				agvAgents.add(agv);
-				agentsContainer.acceptNewAgent(name, agv).start();
-			}*/
-
 			// machines agents
-			String pattern = "\\p{Punct}\\d+(\\p{Punct}\\d+)*\\p{Punct}";
+			/*String pattern = "\\p{Punct}\\d+(\\p{Punct}\\d+)*\\p{Punct}";
 			Pattern r = Pattern.compile(pattern);
 			Matcher m = r.matcher(machines_and_phases);
 			if (m.matches()) {
@@ -143,8 +133,25 @@ public class AGVSajasModel extends Repast3Launcher {
 					machineAgents.add(machine);
 					agentsContainer.acceptNewAgent(name, machine).start();
 				}
-			}
+			}*/
+
+			//INFO int processID, int stepID,int x,int y, int cap, int vel
+			CREATE_HARDCODED_MACHIES();
+
 			//END machines agents
+
+			// create agv's
+			// agv agents
+			for (int i = 0; i < 5; i++) {
+				//AGVAgent agv = new AGVAgent(agv_power);
+				AGVAgent agv = new AGVAgent(3+i,3,50,50,0,0);
+				String name = "Agent: "+agv.getID();
+				for(int x = 0; x < machineAgents.size();x++){
+					agv.addMachineLocation(machineAgents.get(x).getAID(),machineAgents.get(x).getX(),machineAgents.get(x).getY());
+				}
+				agvAgents.add(agv);
+				agentsContainer.acceptNewAgent(name, agv).start();
+			}
 
 		} catch (StaleProxyException e) {
 			e.printStackTrace();
@@ -183,12 +190,16 @@ public class AGVSajasModel extends Repast3Launcher {
 
 		System.out.println("Running BuildSchedule");
 		schedule.scheduleActionAtInterval(1, displaySurf, "updateDisplay", Schedule.LAST);
+
+
 		class MoveAgentPEPE extends BasicAction {
 			public void execute(){
 				moveAgent();
 			}
 		}
-		schedule.scheduleActionAtInterval(500, new MoveAgentPEPE());
+
+
+		schedule.scheduleActionAtInterval(50, new MoveAgentPEPE());
 
 		addSimEventListener(displaySurf);
 		System.out.println("Running BuildDisplay");
@@ -198,10 +209,10 @@ public class AGVSajasModel extends Repast3Launcher {
 	}
 
 	private void moveAgent() {
-		MachineAgent m = machineAgents.get(0);
+		AGVAgent m = agvAgents.get(0);
 		int x = m.getX();
 		int y = m.getY();
-		x++;y++;
+		y++;
 		m.setX(x);
 		m.setY(y);
 	}
@@ -213,8 +224,10 @@ public class AGVSajasModel extends Repast3Launcher {
 		//HARD CODED!
 		Object2DDisplay displayAGV= new Object2DDisplay(space.getCurrentAGVSpace());
 		displayAGV.setObjectList(agvAgents);
+
+
         Object2DDisplay displayMachines= new Object2DDisplay(space.getCurrentMachineSpace());
-        displayAGV.setObjectList(machineAgents);
+		displayMachines.setObjectList(machineAgents);
 
 		displaySurf.addDisplayableProbeable(displayBackground,"Background");
 		displaySurf.addDisplayableProbeable(displayAGV, "AGV");
@@ -305,5 +318,45 @@ public class AGVSajasModel extends Repast3Launcher {
 	public void setMachineAgents(ArrayList<MachineAgent> machineAgents) {
 		this.machineAgents = machineAgents;
 	}
+
+	private void CREATE_HARDCODED_MACHIES() {
+
+		try {//INFO int processID, int stepID,int x,int y, int cap, int vel
+			MachineAgent machine0 = new MachineAgent(1, 1, 10, 7, 50, 10);
+			String name0 = "Agent: " + machine0.getID();
+			machineAgents.add(machine0);
+			agentsContainer.acceptNewAgent(name0, machine0).start();
+
+			MachineAgent machine1 = new MachineAgent(1, 2, 10, 12, 45, 7);
+			String name1 = "Agent: " + machine1.getID();
+			machineAgents.add(machine1);
+			agentsContainer.acceptNewAgent(name1, machine1).start();
+
+			MachineAgent machine2 = new MachineAgent(2, 1, 12, 7, 70, 11);
+			String name2 = "Agent: " + machine2.getID();
+			machineAgents.add(machine2);
+			agentsContainer.acceptNewAgent(name2, machine2).start();
+
+			MachineAgent machine3 = new MachineAgent(2, 2, 12, 12, 33, 11);
+			String name3 = "Agent: " + machine3.getID();
+			machineAgents.add(machine3);
+			agentsContainer.acceptNewAgent(name3, machine3).start();
+
+			MachineAgent machine4 = new MachineAgent(3, 1, 16, 7, 15, 15);
+			String name4 = "Agent: " + machine4.getID();
+			machineAgents.add(machine4);
+			agentsContainer.acceptNewAgent(name4, machine4).start();
+
+			MachineAgent machine5 = new MachineAgent(3, 2, 16, 12, 23, 6);
+			String name5 = "Agent: " + machine5.getID();
+			machineAgents.add(machine5);
+			agentsContainer.acceptNewAgent(name5, machine5).start();
+
+
+		} catch (StaleProxyException e) {
+			e.printStackTrace();
+		}
+	}
+
 
 }

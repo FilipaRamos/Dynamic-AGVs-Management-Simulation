@@ -14,7 +14,10 @@ import spaces.Space;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 
@@ -26,11 +29,10 @@ public class AGVAgent extends Agent implements Drawable {
     // AGV variables
     private int x;
     private int y;
-    private int vX;
-    private int vY;
     private int maxCapacity;
     private int currentCapacity;
     private int power;
+    private Image image;
     private int tick = 50;
 
     // PowerStation Coordinates
@@ -47,7 +49,6 @@ public class AGVAgent extends Agent implements Drawable {
     private ArrayList<Point> pickupPoints;
 
     // space of the simulation
-    private Space space;
     private AID[] machines;
 
     private Point currentDestiny;
@@ -75,11 +76,15 @@ public class AGVAgent extends Agent implements Drawable {
         this.powerY = powerY;
         powerStation = new Point(powerX, powerY, "power");
 
-        setVxVy();
+        try {
+            image = ImageIO.read(new File("src/pepe.jpg"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         IDNumber++;
         ID = IDNumber;
 
-        machinesLocations = new ArrayList();
+        machinesLocations = new ArrayList<>();
         machines = null;
         currentPath = null;
         currentDestiny = null;
@@ -97,7 +102,6 @@ public class AGVAgent extends Agent implements Drawable {
         this.x=-1;
         this.y=-1;
         this.power=power;
-        setVxVy();
         IDNumber++;
         ID = IDNumber;
     }
@@ -565,15 +569,6 @@ public class AGVAgent extends Agent implements Drawable {
         System.out.println("Machine-agent " + getAID().getName() + " terminating.");
     }
 
-    private void setVxVy(){
-        vX = 0;
-        vY = 0;
-        while((vX == 0) && ( vY == 0)){
-            vX = (int)Math.floor(Math.random() * 3) - 1;
-            vY = (int)Math.floor(Math.random() * 3) - 1;
-        }
-    }
-
     /**
      * set the position coordinates of the AGV
      * @param xNew new x coordinate
@@ -626,7 +621,7 @@ public class AGVAgent extends Agent implements Drawable {
 
     @Override
     public void draw(SimGraphics G) {
-        G.drawFastRect(Color.PINK);
+        G.drawImageToFit(image);
     }
 
     @Override
@@ -645,26 +640,6 @@ public class AGVAgent extends Agent implements Drawable {
 
     public void setY(int y) {
         this.y = y;
-    }
-
-    public int getvX() {
-        return vX;
-    }
-
-    public void setvX(int vX) {
-        this.vX = vX;
-    }
-
-    public int getvY() {
-        return vY;
-    }
-
-    public void setvY(int vY) {
-        this.vY = vY;
-    }
-
-    public Space getSpace() {
-        return space;
     }
 
     public int getPower() {
@@ -693,16 +668,6 @@ public class AGVAgent extends Agent implements Drawable {
 
     public int getID() {
         return ID;
-    }
-
-    /**
-     * try to move the AGV
-     * @param newX new x coordinate
-     * @param newY new y coordinate
-     * @return if the AGV moved or not
-     */
-    private boolean makeMove(int newX, int newY){
-        return space.moveAGV(x, y, newX, newY);
     }
 
     public int getMaxCapacity() {
