@@ -359,11 +359,13 @@ public class AGVSajasModel extends Repast3Launcher {
 			agentsContainer.acceptNewAgent(name3, machine3).start();
 
 			MachineAgent machine4 = new MachineAgent(3, 1, 20, 8, 15, 15);
+			machine4.setPhase();
 			String name4 = "Agent: " + machine4.getID();
 			machineAgents.add(machine4);
 			agentsContainer.acceptNewAgent(name4, machine4).start();
 
 			MachineAgent machine5 = new MachineAgent(3, 2, 20, 14, 23, 6);
+			machine5.setPhase();
 			String name5 = "Agent: " + machine5.getID();
 			machineAgents.add(machine5);
 			agentsContainer.acceptNewAgent(name5, machine5).start();

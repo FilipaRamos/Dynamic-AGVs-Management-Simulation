@@ -32,7 +32,6 @@ public class MachineAgent extends Agent implements Drawable{
     private int lotsProducing;
     private int timeToFinishLot;
     private boolean lotProduced = false;
-    private AID lotDestiny;
 
     private int processingStep;
     private int stepID;
@@ -42,6 +41,8 @@ public class MachineAgent extends Agent implements Drawable{
     private AID[] agvs;
     // AID of the machines of the next fase
     private AID[] machines;
+
+    private boolean lastPhase = false;
 
     private ACLMessage cfpAGV = new ACLMessage(ACLMessage.CFP);
     private InitContractNetMachineBehaviour initAGV;
@@ -74,7 +75,6 @@ public class MachineAgent extends Agent implements Drawable{
 
         agvs = null;
         machines = null;
-        lotDestiny = null;
 
         cfpAGV.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         initAGV = null;
@@ -134,7 +134,10 @@ public class MachineAgent extends Agent implements Drawable{
             System.err.println(e.getMessage());
         }
 
-        setupBehaviours();
+        if(lastPhase)
+            setupProduction();
+        else
+            setupBehaviours();
 
     }
 
@@ -185,6 +188,21 @@ public class MachineAgent extends Agent implements Drawable{
         this.addBehaviour(sb);
         this.addBehaviour(responderContract);
         this.addBehaviour(agvInteraction);
+
+    }
+
+    protected void setupProduction(){
+
+        System.out.println("---- Setup last phase behaviours ----");
+
+        // responder of a net machine contractor
+        MessageTemplate template = MessageTemplate.and(
+                MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
+                MessageTemplate.MatchPerformative(ACLMessage.CFP) );
+        ResponderContractNetMachineBehaviour responderContract = new ResponderContractNetMachineBehaviour(this, template);
+
+        addBehaviour(new LotProcessingBehaviour());
+        addBehaviour(responderContract);
 
     }
 
@@ -370,17 +388,17 @@ public class MachineAgent extends Agent implements Drawable{
             if (accept != null) {
                 System.out.println("Accepting proposal " + bestProposal + " from responder " + bestProposer);
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                if(type.equals("machine")){
+                    cfpAGV.setContent(bestProposer.toString());
+                    initAGV = new InitContractNetMachineBehaviour(myAgent, cfpAGV, "agv");
+                }
             }
         }
 
         protected void handleInform(ACLMessage inform) {
             System.out.println(myAgent.getLocalName() + " successfully informed " + inform.getSender());
-            if(type.equals("machine")){
-                cfpAGV.setContent(inform.getSender().toString());
-                initAGV = new InitContractNetMachineBehaviour(myAgent, cfpAGV, "agv");
-            }else if (type.equals("agv")){
+            if (type.equals("agv"))
                 lotProduced = false;
-            }
         }
 
         protected void handleMachine(Vector responses){
@@ -508,6 +526,10 @@ public class MachineAgent extends Agent implements Drawable{
     /**
      * Get and set methods
      */
+
+    public void setPhase(){
+        lastPhase = true;
+    }
 
     public int getCapacity() {
         return capacity;

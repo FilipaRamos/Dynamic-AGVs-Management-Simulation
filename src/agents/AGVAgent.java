@@ -359,7 +359,12 @@ public class AGVAgent extends Agent implements Drawable {
             System.out.println("--- Agent " + getLocalName() + ": Proposal accepted ---");
             System.out.println("Agent " + getLocalName() + " will get the lot");
             addRequest(cfp.getSender() + "&" + cfp.getContent());
-            return null;
+
+            ACLMessage response = cfp.createReply();
+            response.setPerformative(ACLMessage.INFORM);
+            response.setContent("got it");
+
+            return response;
         }
 
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
@@ -389,7 +394,7 @@ public class AGVAgent extends Agent implements Drawable {
         @Override
         public void action() {
 
-            if(requests.size() > 0)
+            if(modifiedRequests.size() > 0)
                 postRequests();
 
             if(points.size() > 0) {
