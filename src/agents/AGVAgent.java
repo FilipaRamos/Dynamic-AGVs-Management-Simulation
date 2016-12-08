@@ -42,6 +42,7 @@ public class AGVAgent extends Agent implements Drawable {
 
     // queue of requests
     private Queue<String> requests = new LinkedList<String>();
+    private Queue<String> modifiedRequests = new LinkedList<>();
     // location of the machines
     private ArrayList<MachineLocation> machinesLocations;
     // list of points to visit
@@ -148,7 +149,7 @@ public class AGVAgent extends Agent implements Drawable {
 
         AGVHandlerBehaviour handler = new AGVHandlerBehaviour();
 
-        //addBehaviour(proposals);
+        addBehaviour(proposals);
         addBehaviour(handler);
 
     }
@@ -279,7 +280,7 @@ public class AGVAgent extends Agent implements Drawable {
         if(mlStart == null || mlEnd == null)
             return -1;
 
-        return Math.sqrt((Math.pow((mlEnd.x - mlStart.x), 2)) + (Math.pow((mlEnd.y - mlStart.y), 2)));
+        return Math.sqrt((Math.pow((double)(mlEnd.x - mlStart.x), 2)) + (Math.pow((double)(mlEnd.y - mlStart.y), 2)));
 
     }
 
@@ -334,7 +335,9 @@ public class AGVAgent extends Agent implements Drawable {
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
             System.out.println("Agent " + getLocalName() + ": CFP received from " + cfp.getSender().getName() + ". Action is " + cfp.getContent());
 
+            // agent has capacity to take the lot
             if (getCapacityBalance() > 0) {
+                //
                 // We provide a proposal
                 // TODO add proposal failure evaluation - 3 conditions
                 System.out.println("Agent " + getLocalName() + ": Proposing " + calculateCost(cfp.getSender().toString(), cfp.getContent()));
@@ -355,6 +358,7 @@ public class AGVAgent extends Agent implements Drawable {
         protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
             System.out.println("--- Agent " + getLocalName() + ": Proposal accepted ---");
             System.out.println("Agent " + getLocalName() + " will get the lot");
+            addRequest(cfp.getSender() + "&" + cfp.getContent());
             return null;
         }
 
@@ -368,7 +372,9 @@ public class AGVAgent extends Agent implements Drawable {
 
             double totalDist = calculateTotalDistance(requestsTemp);
 
-            return (power - totalDist)/requests.size();
+            if(requests.size() == 0)
+                return (power - totalDist);
+            return (power - totalDist)/(double)requests.size();
         }
 
     }
@@ -422,9 +428,6 @@ public class AGVAgent extends Agent implements Drawable {
                         System.out.println(getLocalName() + " AFTER CARGO " + currentCapacity);
                     }
                 }
-
-                // handle move
-                // handle delivery -> send REQUEST message to machine
             }
 
             if(charging){
@@ -447,9 +450,9 @@ public class AGVAgent extends Agent implements Drawable {
 
         System.out.println(getLocalName() + " POST REQUESTS");
 
-        for(int i = 0; i < requests.size(); i++){
+        for(int i = 0; i < modifiedRequests.size(); i++){
             // pass requests to arraylist of points
-            String[] splitted = requests.poll().split("&");
+            String[] splitted = modifiedRequests.poll().split("&");
             Point pickup = getPoint(splitted[0], "pickup");
             Point drop = getPoint(splitted[1], "drop");
             points.add(pickup);
@@ -631,6 +634,8 @@ public class AGVAgent extends Agent implements Drawable {
 
     public void addRequest(String request){
         requests.add(request);
+        modifiedRequests.add(request);
+        System.out.println("ADDED REQUEST " + request);
     }
 
     @Override
