@@ -18,6 +18,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -177,22 +178,20 @@ public class AGVAgent extends Agent implements Drawable {
     }
 
     /**
-     * Evaluates the addition of the new step to the requests queue
-     * @param newStep the step that is being evaluated to be added to the queue
+     * Evaluates the possibility of the agv fulfilling the request
+     * @param newStepStart the start point of the step that is being evaluated to be added to the queue
+     * @param newStepEnd the end point of the step that is being evaluated to be added to the queue
      */
-    protected boolean evaluateStep(String newStep){
+    protected boolean evaluateStep(Point newStepStart, Point newStepEnd){
 
-        Queue<String> requestsTemp = new LinkedList<String>(requests);
-        requestsTemp.add(newStep);
-        String[] splitStep = newStep.split("&");
-        requestsTemp.add(splitStep[1] + "-station");
+        ArrayList<Point> requests = points;
 
-        double dT = calculateTotalDistance(requestsTemp);
-        double dExtra = calculateExtraDistance(requestsTemp);
-        double dE = calculateDistance(splitStep[1], powerX, powerY);
-        double finalDistance = dT + dExtra + dE;
+        double distancePower = calculateDistance(newStepStart.x, newStepStart.y, powerX, powerY);
+        double distancePowerFinal = calculateDistance(newStepEnd.x, newStepEnd.y, powerX, powerY);
 
-        if(finalDistance > power)
+        if(distancePower > initialPower)
+            return false;
+        if(distancePowerFinal > initialPower)
             return false;
 
         return true;
@@ -200,22 +199,16 @@ public class AGVAgent extends Agent implements Drawable {
     }
 
     /**
-     * Calculates the total distance of all paths in the requests queue
-     * @param requestsTemp the queue of requests
+     * Calculates the total distance of all paths in the points to visit list
+     * @param points the list of points to visit
      * @return distance calculated
      */
-    private double calculateTotalDistance(Queue<String> requestsTemp){
+    private double calculateTotalDistance(ArrayList<Point> points){
 
-        double totalDist = 0;
+        double totalDist = calculateDistance(x, y, points.get(0).x, points.get(0).y);
 
-        for(String request : requestsTemp){
-            String[] splited = request.split("&");
-            double currentDist = calculateDistance(splited[0], splited[1]);
-            if(currentDist == -1){
-                System.out.println("[ERROR] Distance in between points could not be calculated! - " + splited[0] + "->" + splited[1]);
-                return -1;
-            }
-            totalDist += currentDist;
+        for(int i = 0; i < points.size()-1; i++){
+            totalDist += calculateDistance(points.get(i).x, points.get(i).y, points.get(i+1).x, points.get(i+1).y);
         }
 
         return totalDist;
@@ -337,20 +330,23 @@ public class AGVAgent extends Agent implements Drawable {
 
             // agent has capacity to take the lot
             if (getCapacityBalance() > 0) {
-                //
-                // We provide a proposal
-                // TODO add proposal failure evaluation - 3 conditions
-                System.out.println("Agent " + getLocalName() + ": Proposing " + calculateCost(cfp.getSender().toString(), cfp.getContent()));
-                ACLMessage propose = cfp.createReply();
-                propose.setPerformative(ACLMessage.PROPOSE);
-                propose.setContent(String.valueOf(calculateCost(cfp.getSender().toString(), cfp.getContent())));
-                return propose;
+                // if the step can be carried out
+                if(evaluateStep(getPoint(cfp.getSender().toString(), "pickup"), getPoint(cfp.getContent(), "drop"))) {
+                    // We provide a proposal
+                    System.out.println("Agent " + getLocalName() + ": Proposing " + calculateCost(cfp.getSender().toString(), cfp.getContent()));
+                    ACLMessage propose = cfp.createReply();
+                    propose.setPerformative(ACLMessage.PROPOSE);
+                    propose.setContent(String.valueOf(calculateCost(cfp.getSender().toString(), cfp.getContent())));
+                    return propose;
+                }
             }
             else {
                 // We refuse to provide a proposal because the agv does not have capacity to transport another lot
                 System.out.println("Agent " + getLocalName() + ": Refuse");
                 throw new RefuseException("transportation-refused");
             }
+
+            return null;
 
         }
 
@@ -372,14 +368,22 @@ public class AGVAgent extends Agent implements Drawable {
         }
 
         protected double calculateCost(String start, String destiny){
-            Queue<String> requestsTemp = new LinkedList<>(requests);
-            requestsTemp.add(start + "&" + destiny);
 
-            double totalDist = calculateTotalDistance(requestsTemp);
+            double distFinalCargo;
+            double nrPowers = 0;
+            double totalDist = 0;
 
-            if(requests.size() == 0)
-                return (power - totalDist);
-            return (power - totalDist)/(double)requests.size();
+            if(points.size() > 0) {
+                distFinalCargo = calculateDistance(points.get(points.size() - 1).x, points.get(points.size() - 1).y,
+                        getPoint(start, "pickup").x, getPoint(start, "pickup").y);
+                nrPowers = Collections.frequency(points, powerStation);
+                totalDist = calculateTotalDistance(points);
+            }else{
+                distFinalCargo = calculateDistance(x, y,
+                        getPoint(start, "pickup").x, getPoint(start, "pickup").y);
+            }
+
+            return ((float)1/(distFinalCargo + nrPowers + totalDist));
         }
 
     }
@@ -394,13 +398,12 @@ public class AGVAgent extends Agent implements Drawable {
         @Override
         public void action() {
 
-            if(modifiedRequests.size() > 0)
+            if(requests.size() > 0)
                 postRequests();
 
             if(points.size() > 0) {
+                //sortPoints();
                 if(tick == 0){
-                    //System.out.println("CURRENT LOCATION (" + x + ", " + y + ")");
-                    System.out.println(getLocalName() + " INITIAL CARGO " + currentCapacity);
                     // it's at the destination
                     if(x == points.get(0).x && y == points.get(0).y){
                         // it's a delivery point
@@ -416,12 +419,13 @@ public class AGVAgent extends Agent implements Drawable {
                         // it's the power station
                         else if(points.get(0).type.equals("power")){
                             charging = true;
+                            System.out.println(getLocalName() + " is charging");
                         }
                         points.remove(0);
                     }
                     // if the agv is out of energy, add the path to the powerStation to the first place on the list
                     if(evaluateEnergy()){
-                        System.out.println("Going to charge");
+                        System.out.println(getLocalName() + " going to charge");
                         updatePoints();
                     }
                     if(points.size() > 0) {
@@ -429,8 +433,6 @@ public class AGVAgent extends Agent implements Drawable {
                             // update coordinates on the movement to the next destination
                             updateCoordinates(points.get(0));
                         }
-                        //System.out.println("NEXT LOCATION (" + x + ", " + y + ")");
-                        System.out.println(getLocalName() + " AFTER CARGO " + currentCapacity);
                     }
                 }
             }
@@ -448,6 +450,34 @@ public class AGVAgent extends Agent implements Drawable {
         }
     }
 
+    protected void sortPoints(){
+
+        double distanceCurrent = calculateDistance(x, y, points.get(0).x, points.get(0).y);
+        int j;
+
+        for(int i = 0; i < points.size(); i++){
+            if(i != 0)
+                distanceCurrent = calculateDistance(points.get(i-1).x, points.get(i-1).y, points.get(i).x, points.get(i).y);
+            j = i;
+            while(distanceCurrent < power){
+                j++;
+                distanceCurrent += calculateDistance(points.get(j-1).x, points.get(j-1).y, points.get(j).x, points.get(j).y)
+                        + calculateDistance(points.get(j).x, points.get(j).y, powerX, powerY);
+
+            }
+            if(distanceCurrent >= power){
+                points.add(j, powerStation);
+                i = j+1;
+            }
+        }
+
+        System.out.println();
+        for(int k = 0; k < points.size(); k++){
+            System.out.print("->" + points.get(k));
+        }
+
+    }
+
     /**
      * Makes a list of points to visit from the request queue
      */
@@ -455,9 +485,9 @@ public class AGVAgent extends Agent implements Drawable {
 
         System.out.println(getLocalName() + " POST REQUESTS");
 
-        for(int i = 0; i < modifiedRequests.size(); i++){
+        for(int i = 0; i < requests.size(); i++){
             // pass requests to arraylist of points
-            String[] splitted = modifiedRequests.poll().split("&");
+            String[] splitted = requests.poll().split("&");
             Point pickup = getPoint(splitted[0], "pickup");
             Point drop = getPoint(splitted[1], "drop");
             points.add(pickup);
@@ -639,7 +669,6 @@ public class AGVAgent extends Agent implements Drawable {
 
     public void addRequest(String request){
         requests.add(request);
-        modifiedRequests.add(request);
         System.out.println("ADDED REQUEST " + request);
     }
 

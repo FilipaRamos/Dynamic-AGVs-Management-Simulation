@@ -255,6 +255,13 @@ public class MachineAgent extends Agent implements Drawable{
 
             // if there are lots to process
             if(lotsProducing > 0 && !lotProduced) {
+
+                try {
+                    image = ImageIO.read(new File("src/red.png"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 System.out.println("[ " + myAgent.getAID() +  "] Producing lot");
                 // if the lot is not finished processing
                 if (timeToFinishLot > 0) {
@@ -270,6 +277,13 @@ public class MachineAgent extends Agent implements Drawable{
                     // negotiate passage of the lot to another machine
                     System.out.println("[ " + myAgent.getAID() +  "] lotsLeft: " + lotsProducing + " and timeToFinish: " + timeToFinishLot);
                     lotProduced = true;
+
+                    try {
+                        image = ImageIO.read(new File("src/machine.jpg"));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                     done();
                 }
             }
@@ -431,6 +445,12 @@ public class MachineAgent extends Agent implements Drawable{
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
             System.out.println("Agent " + getID() + ": CFP received from " + cfp.getSender() + ". - " + cfp.getContent());
 
+            try {
+                image = ImageIO.read(new File("src/yellow.jpg"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             // if the machine still has capacity
             if ((capacity-lotsProducing) > 0) {
                 // We provide a proposal
@@ -456,6 +476,8 @@ public class MachineAgent extends Agent implements Drawable{
             ACLMessage response = cfp.createReply();
             response.setPerformative(ACLMessage.INFORM);
             response.setContent("got it");
+
+            lotProduced = false;
 
             return response;
         }

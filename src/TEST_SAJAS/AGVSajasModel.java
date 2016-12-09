@@ -141,7 +141,7 @@ public class AGVSajasModel extends Repast3Launcher {
 			// agv agents
 			for (int i = 0; i < 5; i++) {
 				//AGVAgent agv = new AGVAgent(agv_power);
-				AGVAgent agv = new AGVAgent( 3+i, 3, 50, 50, 0, 0);
+				AGVAgent agv = new AGVAgent( 3+i, 3, 100, 50, 0, 0);
 				String name = "Agent: " + agv.getID();
 				for(int x = 0; x < machineAgents.size();x++){
 					agv.addMachineLocation(machineAgents.get(x).getAID(),machineAgents.get(x).getX(),machineAgents.get(x).getY());
@@ -338,38 +338,34 @@ public class AGVSajasModel extends Repast3Launcher {
 
 		try {//INFO int processID, int stepID,int x,int y, int cap, int vel
 			MachineAgent machine0 = new MachineAgent(1, 1, 10, 8, 50, 10);
-            machine0.setLotsProducing(20);
+            machine0.setLotsProducing(300);
 			String name0 = "Agent: " + machine0.getID();
 			machineAgents.add(machine0);
 			agentsContainer.acceptNewAgent(name0, machine0).start();
 
 			MachineAgent machine1 = new MachineAgent(1, 2, 10, 14, 45, 7);
-			machine1.setLotsProducing(10);
+			machine1.setLotsProducing(300);
 			String name1 = "Agent: " + machine1.getID();
 			machineAgents.add(machine1);
 			agentsContainer.acceptNewAgent(name1, machine1).start();
 
 			MachineAgent machine2 = new MachineAgent(2, 1, 15, 8, 70, 11);
-			machine2.setLotsProducing(30);
 			String name2 = "Agent: " + machine2.getID();
 			machineAgents.add(machine2);
 			agentsContainer.acceptNewAgent(name2, machine2).start();
 
 			MachineAgent machine3 = new MachineAgent(2, 2, 15, 14, 33, 11);
-			machine3.setLotsProducing(23);
 			String name3 = "Agent: " + machine3.getID();
 			machineAgents.add(machine3);
 			agentsContainer.acceptNewAgent(name3, machine3).start();
 
 			MachineAgent machine4 = new MachineAgent(3, 1, 20, 8, 15, 15);
-			machine4.setLotsProducing(13);
 			machine4.setPhase();
 			String name4 = "Agent: " + machine4.getID();
 			machineAgents.add(machine4);
 			agentsContainer.acceptNewAgent(name4, machine4).start();
 
 			MachineAgent machine5 = new MachineAgent(3, 2, 20, 14, 23, 6);
-			machine5.setLotsProducing(19);
 			machine5.setPhase();
 			String name5 = "Agent: " + machine5.getID();
 			machineAgents.add(machine5);
