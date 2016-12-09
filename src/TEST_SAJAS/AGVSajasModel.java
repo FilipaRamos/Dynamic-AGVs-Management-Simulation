@@ -139,7 +139,7 @@ public class AGVSajasModel extends Repast3Launcher {
 
 			// create agv's
 			// agv agents
-			for (int i = 0; i < 5; i++) {
+			for (int i = 0; i < 1; i++) {
 				//AGVAgent agv = new AGVAgent(agv_power);
 				AGVAgent agv = new AGVAgent( 3+i, 3, 100, 50, 0, 0);
 				String name = "Agent: " + agv.getID();
@@ -338,12 +338,13 @@ public class AGVSajasModel extends Repast3Launcher {
 
 		try {//INFO int processID, int stepID,int x,int y, int cap, int vel
 			MachineAgent machine0 = new MachineAgent(1, 1, 10, 8, 50, 10);
-            machine0.setLotsProducing(3);
+            machine0.setLotsProducing(300);
 			String name0 = "Agent: " + machine0.getID();
 			machineAgents.add(machine0);
 			agentsContainer.acceptNewAgent(name0, machine0).start();
 
 			MachineAgent machine1 = new MachineAgent(1, 2, 10, 14, 45, 7);
+			machine1.setLotsProducing(300);
 			String name1 = "Agent: " + machine1.getID();
 			machineAgents.add(machine1);
 			agentsContainer.acceptNewAgent(name1, machine1).start();

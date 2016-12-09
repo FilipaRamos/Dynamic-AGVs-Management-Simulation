@@ -45,7 +45,7 @@ public class MachineAgent extends Agent implements Drawable{
     private boolean lastPhase = false;
 
     private ACLMessage cfpAGV = new ACLMessage(ACLMessage.CFP);
-    private InitContractNetMachineBehaviour initAGV;
+    private InitContractNetBehaviour initAGV;
 
     /**
      * Constructor of a machine agent
@@ -158,8 +158,8 @@ public class MachineAgent extends Agent implements Drawable{
         cfpMach.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         cfpMach.setContent(" Do you want the lot? ;)");
 
-        InitContractNetMachineBehaviour initMachine = new InitContractNetMachineBehaviour(this, cfpMach, "machine");
-        initAGV = new InitContractNetMachineBehaviour(this, cfpAGV, "agv");
+        InitContractNetBehaviour initMachine = new InitContractNetBehaviour(this, cfpMach, "machine");
+        initAGV = new InitContractNetBehaviour(this, cfpAGV, "agv");
 
         // cycle: process->negotiate machine->negotiate transport
         SequentialBehaviour sb = new SequentialBehaviour(){
@@ -168,8 +168,8 @@ public class MachineAgent extends Agent implements Drawable{
 
                 removeSubBehaviour(initMachine);
                 removeSubBehaviour(initAGV);
-                InitContractNetMachineBehaviour initMachine = new InitContractNetMachineBehaviour(myAgent, cfpMach, "machine");
-                initAGV = new InitContractNetMachineBehaviour(myAgent, cfpAGV, "agv");
+                InitContractNetBehaviour initMachine = new InitContractNetBehaviour(myAgent, cfpMach, "machine");
+                initAGV = new InitContractNetBehaviour(myAgent, cfpAGV, "agv");
                 addSubBehaviour(initMachine);
                 addSubBehaviour(initAGV);
 
@@ -255,6 +255,13 @@ public class MachineAgent extends Agent implements Drawable{
 
             // if there are lots to process
             if(lotsProducing > 0 && !lotProduced) {
+
+                try {
+                    image = ImageIO.read(new File("src/red.png"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 System.out.println("[ " + myAgent.getAID() +  "] Producing lot");
                 // if the lot is not finished processing
                 if (timeToFinishLot > 0) {
@@ -270,6 +277,13 @@ public class MachineAgent extends Agent implements Drawable{
                     // negotiate passage of the lot to another machine
                     System.out.println("[ " + myAgent.getAID() +  "] lotsLeft: " + lotsProducing + " and timeToFinish: " + timeToFinishLot);
                     lotProduced = true;
+
+                    try {
+                        image = ImageIO.read(new File("src/machine.jpg"));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                     done();
                 }
             }
@@ -288,12 +302,12 @@ public class MachineAgent extends Agent implements Drawable{
     /**
      * Behaviour to initiate a ContractNet between machines
      */
-    protected class InitContractNetMachineBehaviour extends ContractNetInitiator {
+    protected class InitContractNetBehaviour extends ContractNetInitiator {
 
         protected AID bestProposer;
         protected String type;
 
-        public InitContractNetMachineBehaviour(Agent a, ACLMessage cfp, String type) {
+        public InitContractNetBehaviour(Agent a, ACLMessage cfp, String type) {
             super(a, cfp);
 
             this.type = type;
@@ -390,7 +404,7 @@ public class MachineAgent extends Agent implements Drawable{
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                 if(type.equals("machine")){
                     cfpAGV.setContent(bestProposer.toString());
-                    initAGV = new InitContractNetMachineBehaviour(myAgent, cfpAGV, "agv");
+                    initAGV = new InitContractNetBehaviour(myAgent, cfpAGV, "agv");
                 }
             }
         }
@@ -431,6 +445,12 @@ public class MachineAgent extends Agent implements Drawable{
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
             System.out.println("Agent " + getID() + ": CFP received from " + cfp.getSender() + ". - " + cfp.getContent());
 
+            try {
+                image = ImageIO.read(new File("src/yellow.jpg"));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             // if the machine still has capacity
             if ((capacity-lotsProducing) > 0) {
                 // We provide a proposal
@@ -456,6 +476,8 @@ public class MachineAgent extends Agent implements Drawable{
             ACLMessage response = cfp.createReply();
             response.setPerformative(ACLMessage.INFORM);
             response.setContent("got it");
+
+            lotProduced = false;
 
             return response;
         }
@@ -488,6 +510,8 @@ public class MachineAgent extends Agent implements Drawable{
                     requestLotPickup();
                 else if(msg.getContent().equals("drop"))
                     requestLotDrop();
+
+                report();
             }
         }
 
@@ -505,7 +529,10 @@ public class MachineAgent extends Agent implements Drawable{
      * Update the potential value
      */
     protected void updatePotential(){
-        potential = 1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity);
+        if(lotsProducing > 0)
+            potential = 1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity);
+        else
+            potential = 80*(1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity));
     }
 
     /**
