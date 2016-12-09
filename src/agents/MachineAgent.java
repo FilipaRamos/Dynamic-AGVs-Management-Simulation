@@ -45,7 +45,7 @@ public class MachineAgent extends Agent implements Drawable{
     private boolean lastPhase = false;
 
     private ACLMessage cfpAGV = new ACLMessage(ACLMessage.CFP);
-    private InitContractNetMachineBehaviour initAGV;
+    private InitContractNetBehaviour initAGV;
 
     /**
      * Constructor of a machine agent
@@ -158,8 +158,8 @@ public class MachineAgent extends Agent implements Drawable{
         cfpMach.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
         cfpMach.setContent(" Do you want the lot? ;)");
 
-        InitContractNetMachineBehaviour initMachine = new InitContractNetMachineBehaviour(this, cfpMach, "machine");
-        initAGV = new InitContractNetMachineBehaviour(this, cfpAGV, "agv");
+        InitContractNetBehaviour initMachine = new InitContractNetBehaviour(this, cfpMach, "machine");
+        initAGV = new InitContractNetBehaviour(this, cfpAGV, "agv");
 
         // cycle: process->negotiate machine->negotiate transport
         SequentialBehaviour sb = new SequentialBehaviour(){
@@ -168,8 +168,8 @@ public class MachineAgent extends Agent implements Drawable{
 
                 removeSubBehaviour(initMachine);
                 removeSubBehaviour(initAGV);
-                InitContractNetMachineBehaviour initMachine = new InitContractNetMachineBehaviour(myAgent, cfpMach, "machine");
-                initAGV = new InitContractNetMachineBehaviour(myAgent, cfpAGV, "agv");
+                InitContractNetBehaviour initMachine = new InitContractNetBehaviour(myAgent, cfpMach, "machine");
+                initAGV = new InitContractNetBehaviour(myAgent, cfpAGV, "agv");
                 addSubBehaviour(initMachine);
                 addSubBehaviour(initAGV);
 
@@ -288,12 +288,12 @@ public class MachineAgent extends Agent implements Drawable{
     /**
      * Behaviour to initiate a ContractNet between machines
      */
-    protected class InitContractNetMachineBehaviour extends ContractNetInitiator {
+    protected class InitContractNetBehaviour extends ContractNetInitiator {
 
         protected AID bestProposer;
         protected String type;
 
-        public InitContractNetMachineBehaviour(Agent a, ACLMessage cfp, String type) {
+        public InitContractNetBehaviour(Agent a, ACLMessage cfp, String type) {
             super(a, cfp);
 
             this.type = type;
@@ -390,7 +390,7 @@ public class MachineAgent extends Agent implements Drawable{
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                 if(type.equals("machine")){
                     cfpAGV.setContent(bestProposer.toString());
-                    initAGV = new InitContractNetMachineBehaviour(myAgent, cfpAGV, "agv");
+                    initAGV = new InitContractNetBehaviour(myAgent, cfpAGV, "agv");
                 }
             }
         }
