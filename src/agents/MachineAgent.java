@@ -510,6 +510,8 @@ public class MachineAgent extends Agent implements Drawable{
                     requestLotPickup();
                 else if(msg.getContent().equals("drop"))
                     requestLotDrop();
+
+                report();
             }
         }
 
@@ -527,7 +529,10 @@ public class MachineAgent extends Agent implements Drawable{
      * Update the potential value
      */
     protected void updatePotential(){
-        potential = 1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity);
+        if(lotsProducing > 0)
+            potential = 1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity);
+        else
+            potential = 80*(1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity));
     }
 
     /**

@@ -139,7 +139,7 @@ public class AGVSajasModel extends Repast3Launcher {
 
 			// create agv's
 			// agv agents
-			for (int i = 0; i < 5; i++) {
+			for (int i = 0; i < 1; i++) {
 				//AGVAgent agv = new AGVAgent(agv_power);
 				AGVAgent agv = new AGVAgent( 3+i, 3, 100, 50, 0, 0);
 				String name = "Agent: " + agv.getID();

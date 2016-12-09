@@ -418,14 +418,13 @@ public class AGVAgent extends Agent implements Drawable {
                         }
                         // it's the power station
                         else if(points.get(0).type.equals("power")){
-                            charging = true;
-                            System.out.println(getLocalName() + " is charging");
+                            if(!charging)
+                                charging = true;
                         }
                         points.remove(0);
                     }
                     // if the agv is out of energy, add the path to the powerStation to the first place on the list
                     if(evaluateEnergy()){
-                        System.out.println(getLocalName() + " going to charge");
                         updatePoints();
                     }
                     if(points.size() > 0) {
@@ -491,9 +490,7 @@ public class AGVAgent extends Agent implements Drawable {
             Point pickup = getPoint(splitted[0], "pickup");
             Point drop = getPoint(splitted[1], "drop");
             points.add(pickup);
-            System.out.println(getLocalName() + " ONE MORE PICKUP : (" + pickup.x + ", " + pickup.y + ")");
             points.add(drop);
-            System.out.println(getLocalName() + " ONE MORE DROP : (" + drop.x + ", " + drop.y + ")");
         }
 
     }
@@ -565,7 +562,8 @@ public class AGVAgent extends Agent implements Drawable {
 
             send(request);
 
-            System.out.println("Sent REQUEST " + type + " message");
+            System.out.println("AGV requesting " + type + " from " + getPointAID(p));
+
             return true;
 
         }else{
@@ -601,7 +599,6 @@ public class AGVAgent extends Agent implements Drawable {
         if(power > distance){
             return false;
         }
-        System.out.println("No energy");
         return true;
 
     }
@@ -618,7 +615,7 @@ public class AGVAgent extends Agent implements Drawable {
         }
 
         // Printout a dismissal message
-        System.out.println("Machine-agent " + getAID().getName() + " terminating.");
+        System.out.println("AGV agent " + getAID().getName() + " terminating.");
     }
 
     /**
@@ -669,7 +666,6 @@ public class AGVAgent extends Agent implements Drawable {
 
     public void addRequest(String request){
         requests.add(request);
-        System.out.println("ADDED REQUEST " + request);
     }
 
     @Override
