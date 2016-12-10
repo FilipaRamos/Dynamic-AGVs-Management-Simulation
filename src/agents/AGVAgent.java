@@ -1,5 +1,6 @@
 package agents;
 
+import Utils.Images;
 import jade.core.AID;
 import jade.domain.FIPAAgentManagement.*;
 import jade.domain.FIPAException;
@@ -13,14 +14,13 @@ import sajas.proto.ContractNetResponder;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
+
+import static model.AGVSajasModel.images;
 
 /**
  * Created by danie on 03/12/2016.
@@ -34,7 +34,6 @@ public class AGVAgent extends Agent implements Drawable {
     private int currentCapacity;
     private int power;
     private int initialPower;
-    private Image image;
     private int tick = 50;
 
     // PowerStation Coordinates
@@ -79,12 +78,6 @@ public class AGVAgent extends Agent implements Drawable {
         this.powerX = powerX;
         this.powerY = powerY;
         powerStation = new Point(powerX, powerY, "power");
-
-        try {
-            image = ImageIO.read(new File("src/pepe.jpg"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         IDNumber++;
         ID = IDNumber;
 
@@ -95,19 +88,6 @@ public class AGVAgent extends Agent implements Drawable {
         points = new ArrayList<>();
         dropPoints = new ArrayList<>();
         pickupPoints = new ArrayList<>();
-    }
-
-    /**
-     * Set the move vector
-     */
-    public AGVAgent(int power){
-        this.maxCapacity=3;
-        this.currentCapacity=0;
-        this.x=-1;
-        this.y=-1;
-        this.power=power;
-        IDNumber++;
-        ID = IDNumber;
     }
 
     /**
@@ -670,7 +650,8 @@ public class AGVAgent extends Agent implements Drawable {
 
     @Override
     public void draw(SimGraphics G) {
-        G.drawImageToFit(image);
+        Image im =  images.getImage(initialPower,power,maxCapacity,currentCapacity);
+        G.drawImageToFit(im);
     }
 
     @Override
