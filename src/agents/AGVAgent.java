@@ -1,6 +1,5 @@
 package agents;
 
-import Utils.Images;
 import jade.core.AID;
 import jade.domain.FIPAAgentManagement.*;
 import jade.domain.FIPAException;
@@ -407,9 +406,11 @@ public class AGVAgent extends Agent implements Drawable {
                         }
                         points.remove(0);
                     }
-                    // if the agv is out of energy, add the path to the powerStation to the first place on the list
-                    if(evaluateEnergy()){
-                        updatePoints();
+                    if(!charging) {
+                        // if the agv is out of energy, add the path to the powerStation to the first place on the list
+                        if (evaluateEnergy()) {
+                            updatePoints();
+                        }
                     }
                     if(points.size() > 0) {
                         if(!charging) {
@@ -421,15 +422,21 @@ public class AGVAgent extends Agent implements Drawable {
             }
 
             if(charging){
-                tick = 500;
-                power = initialPower;
-                charging = false;
+                tick = initialPower;
+                tick--;
+                if(power == initialPower)
+                    charging = false;
+                if(charging)
+                    power++;
             }else {
-                if (tick > 0)
+                if (tick > 0) {
                     tick--;
+                }
                 else
                     tick = 50;
             }
+
+            System.out.println("POWER " + getLocalName() + " = " + power);
         }
     }
 
@@ -443,13 +450,13 @@ public class AGVAgent extends Agent implements Drawable {
 
         for(int i = 0; i < pointsTemp.size(); i++){
             if(pointsTemp.get(i).type.equals("pickup")) {
-                System.out.println("O I:" + pointsTemp.get(i).x + pointsTemp.get(i).y);
+                //System.out.println("O I:" + pointsTemp.get(i).x + pointsTemp.get(i).y);
                 for (int j = i + 1; j < pointsTemp.size() - getTrimSize(i, pointsTemp); j++) {
                     System.out.println(j);
                     if (pointsTemp.get(j).x == pointsTemp.get(i).x &&
                             pointsTemp.get(j).y == pointsTemp.get(i).y &&
                             pointsTemp.get(j).type.equals(pointsTemp.get(i).type)) {
-                        System.out.println("INSIDE IF first:" + pointsTemp.get(i).x + pointsTemp.get(i).y);
+                        //System.out.println("INSIDE IF first:" + pointsTemp.get(i).x + pointsTemp.get(i).y);
                         if (simulateOrder(pointsTemp, pointsTemp.get(j), i + 1)) {
                             pickups.add(pointsTemp.get(j));
                             System.out.println("Added to pickup.");
@@ -463,12 +470,12 @@ public class AGVAgent extends Agent implements Drawable {
             }
         }
 
-        System.out.println();
+        /*System.out.println();
         for(int k = 0; k < points.size(); k++){
             System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
         }
 
-        System.out.println();
+        System.out.println();*/
 
     }
 

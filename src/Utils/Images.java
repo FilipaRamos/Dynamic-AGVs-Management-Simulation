@@ -32,7 +32,6 @@ public class Images {
         if(bat == 0)
             bat=1;
         String im = bat+"_"+cap;
-        System.out.println("Power: "+power+" Image: "+im);
         return (Image) images.get(im);
     }
 
