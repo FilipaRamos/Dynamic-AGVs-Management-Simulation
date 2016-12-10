@@ -98,6 +98,11 @@ public class Parser {
                     int lots = Integer.parseInt(element.getAttribute("lots"));
                     m.setLotsProducing(lots);
                 }
+                if(element.hasAttribute("last_phase")){
+                    boolean last = Boolean.parseBoolean(element.getAttribute("last_phase"));
+                    m.setPhase(last);
+                }
+
                 machines.add(m);
             }
         }
@@ -106,7 +111,9 @@ public class Parser {
     public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException {
         Parser p = new Parser("src/XML_INIT.xml");
         p.parse();
-        System.out.println("x: "+p.getPower_station_x()+" y: "+p.getPower_station_y());
+        for(int i = 0; i < p.getMachines().size(); i++){
+            System.out.println("AID: "+p.getMachines().get(i).getID());
+        }
     }
 
     public ArrayList<MachineAgent> getMachines() {

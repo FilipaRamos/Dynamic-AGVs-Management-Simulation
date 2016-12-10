@@ -603,8 +603,8 @@ public class MachineAgent extends Agent implements Drawable{
      * Get and set methods
      */
 
-    public void setPhase(){
-        lastPhase = true;
+    public void setPhase(boolean lastPhase){
+        this.lastPhase = lastPhase;
     }
 
     public int getCapacity() {

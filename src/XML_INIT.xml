@@ -37,13 +37,13 @@
 			<MACHINE_CAPACITY>41</MACHINE_CAPACITY>
 			<MACHINE_SPEED>14</MACHINE_SPEED>
 		</MACHINE_AGENT>
-		<MACHINE_AGENT phase="3" id="1">
+		<MACHINE_AGENT phase="3" id="1" last_phase="true">
 			<x>11</x>
 			<y>4</y>
 			<MACHINE_CAPACITY>33</MACHINE_CAPACITY>
 			<MACHINE_SPEED>17</MACHINE_SPEED>
 		</MACHINE_AGENT>
-		<MACHINE_AGENT phase="3" id="2">
+		<MACHINE_AGENT phase="3" id="2" last_phase="true">
 			<x>11</x>
 			<y>10</y>
 			<MACHINE_CAPACITY>20</MACHINE_CAPACITY>
