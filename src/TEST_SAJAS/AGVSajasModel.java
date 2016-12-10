@@ -139,7 +139,7 @@ public class AGVSajasModel extends Repast3Launcher {
 
 			// create agv's
 			// agv agents
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 1; i++) {
 				//AGVAgent agv = new AGVAgent(agv_power);
 				AGVAgent agv = new AGVAgent( 3+i, 3, 100, 50, 0, 0);
 				String name = "Agent: " + agv.getID();
@@ -150,12 +150,12 @@ public class AGVSajasModel extends Repast3Launcher {
 				agentsContainer.acceptNewAgent(name, agv).start();
 			}
 
-			/*agvAgents.get(0).addRequest(machineAgents.get(0).getAID() + "&" + machineAgents.get(3).getAID());
-            agvAgents.get(0).addRequest(machineAgents.get(3).getAID() + "&" + machineAgents.get(5).getAID());
+			agvAgents.get(0).addRequest(machineAgents.get(0).getAID() + "&" + machineAgents.get(3).getAID());
+            agvAgents.get(0).addRequest(machineAgents.get(0).getAID() + "&" + machineAgents.get(2).getAID());
             agvAgents.get(0).addRequest(machineAgents.get(1).getAID() + "&" + machineAgents.get(2).getAID());
 			agvAgents.get(0).addRequest(machineAgents.get(2).getAID() + "&" + machineAgents.get(4).getAID());
 
-            agvAgents.get(1).addRequest(machineAgents.get(0).getAID() + "&" + machineAgents.get(2).getAID());
+            /*agvAgents.get(1).addRequest(machineAgents.get(0).getAID() + "&" + machineAgents.get(2).getAID());
             agvAgents.get(1).addRequest(machineAgents.get(1).getAID() + "&" + machineAgents.get(3).getAID());
 
             agvAgents.get(2).addRequest(machineAgents.get(2).getAID() + "&" + machineAgents.get(5).getAID());
@@ -338,13 +338,13 @@ public class AGVSajasModel extends Repast3Launcher {
 
 		try {//INFO int processID, int stepID,int x,int y, int cap, int vel
 			MachineAgent machine0 = new MachineAgent(1, 1, 10, 8, 50, 10);
-            machine0.setLotsProducing(15);
+            //machine0.setLotsProducing(15);
 			String name0 = "Agent: " + machine0.getID();
 			machineAgents.add(machine0);
 			agentsContainer.acceptNewAgent(name0, machine0).start();
 
 			MachineAgent machine1 = new MachineAgent(1, 2, 10, 14, 45, 7);
-			machine1.setLotsProducing(15);
+			//machine1.setLotsProducing(15);
 			String name1 = "Agent: " + machine1.getID();
 			machineAgents.add(machine1);
 			agentsContainer.acceptNewAgent(name1, machine1).start();

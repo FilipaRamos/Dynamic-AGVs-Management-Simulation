@@ -402,7 +402,6 @@ public class AGVAgent extends Agent implements Drawable {
                 postRequests();
 
             if(points.size() > 0) {
-                //sortPoints();
                 if(tick == 0){
                     // it's at the destination
                     if(x == points.get(0).x && y == points.get(0).y){
@@ -449,32 +448,85 @@ public class AGVAgent extends Agent implements Drawable {
         }
     }
 
+    /**
+     * Sort the points to visit in order to make the path ore efficient
+     */
     protected void sortPoints(){
 
-        double distanceCurrent = calculateDistance(x, y, points.get(0).x, points.get(0).y);
-        int j;
+        ArrayList<Point> pointsTemp = points;
+        ArrayList<Point> pickups = new ArrayList<>();
 
-        for(int i = 0; i < points.size(); i++){
-            if(i != 0)
-                distanceCurrent = calculateDistance(points.get(i-1).x, points.get(i-1).y, points.get(i).x, points.get(i).y);
-            j = i;
-            while(distanceCurrent < power){
-                j++;
-                distanceCurrent += calculateDistance(points.get(j-1).x, points.get(j-1).y, points.get(j).x, points.get(j).y)
-                        + calculateDistance(points.get(j).x, points.get(j).y, powerX, powerY);
-
-            }
-            if(distanceCurrent >= power){
-                points.add(j, powerStation);
-                i = j+1;
+        for(int i = 0; i < pointsTemp.size(); i++){
+            if(pointsTemp.get(i).type.equals("pickup")) {
+                System.out.println("O I:" + pointsTemp.get(i).x + pointsTemp.get(i).y);
+                for (int j = i + 1; j < pointsTemp.size() - getTrimSize(i, pointsTemp); j++) {
+                    System.out.println(j);
+                    if (pointsTemp.get(j).x == pointsTemp.get(i).x &&
+                            pointsTemp.get(j).y == pointsTemp.get(i).y &&
+                            pointsTemp.get(j).type.equals(pointsTemp.get(i).type)) {
+                        System.out.println("INSIDE IF first:" + pointsTemp.get(i).x + pointsTemp.get(i).y);
+                        if (simulateOrder(pointsTemp, pointsTemp.get(j), i + 1)) {
+                            pickups.add(pointsTemp.get(j));
+                            System.out.println("Added to pickup.");
+                        }
+                    }
+                }
+                for (int k = 0; k < pickups.size(); k++)
+                    points.add(i + 1, pickups.get(k));
+                pickups.clear();
+                System.out.println("INSIDE PICKUP");
             }
         }
 
         System.out.println();
         for(int k = 0; k < points.size(); k++){
-            System.out.print("->" + points.get(k));
+            System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
         }
 
+        System.out.println();
+
+    }
+
+    /**
+     * Returns the size of the array after the index
+     * @param index from which to count
+     * @param points arraylist to count
+     * @return number of elements
+     */
+    protected int getTrimSize(int index, ArrayList<Point> points){
+        return points.size() - (index+1);
+    }
+
+    protected boolean simulateOrder(ArrayList<Point> pointsTemp, Point p, int index){
+        pointsTemp.add(index, p);
+        System.out.println("INSIDE SIMULATE ORDER");
+        if(calculateCargo(pointsTemp) == -1)
+            return false;
+        if(calculateCargo(pointsTemp) > maxCapacity)
+            return false;
+        return true;
+    }
+
+    /**
+     * Calculates the total cargo of the current points arranjment
+     * @param pointsArray
+     * @return the number of lots
+     */
+    protected int calculateCargo(ArrayList<Point> pointsArray){
+        int cargo = 0;
+
+        for(int i = 0; i < pointsArray.size(); i++){
+            if(pointsArray.get(i).type.equals("pickup"))
+                cargo++;
+            else if(pointsArray.get(i).equals("drop"))
+                cargo--;
+            if(cargo > maxCapacity)
+                return -1;
+        }
+
+        System.out.println("CALCULATE CARGO:" + cargo);
+
+        return cargo;
     }
 
     /**
@@ -492,6 +544,8 @@ public class AGVAgent extends Agent implements Drawable {
             points.add(pickup);
             points.add(drop);
         }
+
+        sortPoints();
 
     }
 
