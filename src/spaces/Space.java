@@ -14,11 +14,13 @@ public class Space {
     private Object2DGrid AGVSpace;
     private Object2DGrid machineSpace;
     private Object2DGrid backgroundSpace;
-    private Image image;
+    private Image imageTile;
+    private Image imageCharging;
 
-    public Space(int xSize, int ySize){
+    public Space(int xSize, int ySize,int chargeX,int chargeY){
         try {
-            image = ImageIO.read(new File("src/tile.jpg"));
+            imageTile = ImageIO.read(new File("src/tile.jpg"));
+            imageCharging = ImageIO.read(new File("src/charge.jpg"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -27,7 +29,10 @@ public class Space {
         backgroundSpace = new Object2DGrid(xSize,ySize);
         for(int i = 0; i < xSize; i++){
             for(int j = 0; j < ySize; j++){
-                backgroundSpace.putObjectAt(i,j,new Tile(i,j));
+                if(i==chargeX && j== chargeY)
+                    backgroundSpace.putObjectAt(i,j,new ChargingTile(i,j));
+                else
+                    backgroundSpace.putObjectAt(i,j,new Tile(i,j));
             }
         }
     }
@@ -41,7 +46,7 @@ public class Space {
         }
         @Override
         public void draw(SimGraphics simGraphics) {
-            simGraphics.drawImageToFit(image);
+            simGraphics.drawImageToFit(imageTile);
         }
 
         @Override
@@ -64,5 +69,28 @@ public class Space {
     }
     public Object2DGrid getCurrentBackgroundSpace() {
         return backgroundSpace;
+    }
+
+    private class ChargingTile implements Drawable {
+        private int x,y;
+
+        public ChargingTile(int x,int y){
+            this.x=x;
+            this.y=y;
+        }
+        @Override
+        public void draw(SimGraphics simGraphics) {
+            simGraphics.drawImageToFit(imageCharging);
+        }
+
+        @Override
+        public int getX() {
+            return x;
+        }
+
+        @Override
+        public int getY() {
+            return y;
+        }
     }
 }

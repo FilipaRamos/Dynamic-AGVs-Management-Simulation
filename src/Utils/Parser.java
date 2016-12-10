@@ -78,7 +78,7 @@ public class Parser {
         for(int i = 0; i < numAgvs; i++){
             int x = rand.nextInt(world_x_size-1);
             int y = rand.nextInt(world_y_size-1);
-            agvs.add(new AGVAgent(x,y,powerAgvs,capacityAgvs,power_station_x,power_station_y));
+            agvs.add(new AGVAgent(x,y,powerAgvs,capacityAgvs,0,0));/*power_station_x,power_station_y)*/
         }
 
         //Get and build Machine agents

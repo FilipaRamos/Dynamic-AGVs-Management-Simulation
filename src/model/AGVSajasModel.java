@@ -161,7 +161,7 @@ public class AGVSajasModel extends Repast3Launcher {
 
 	private void buildAndScheduleDisplay() {
 		//build space
-		space = new Space(parser.getWorld_x_size(), parser.getWorld_y_size());
+		space = new Space(parser.getWorld_x_size(), parser.getWorld_y_size(),parser.getPower_station_x(),parser.getPower_station_y());
 		// display surface
 		if (displaySurf != null)
 			displaySurf.dispose();
