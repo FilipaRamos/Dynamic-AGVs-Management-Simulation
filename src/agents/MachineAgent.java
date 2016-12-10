@@ -201,8 +201,13 @@ public class MachineAgent extends Agent implements Drawable{
                 MessageTemplate.MatchPerformative(ACLMessage.CFP) );
         ResponderContractNetMachineBehaviour responderContract = new ResponderContractNetMachineBehaviour(this, template);
 
-        addBehaviour(new LotProcessingBehaviour());
+        // responder of an agv drop or pickup request
+        MessageTemplate t = MessageTemplate.MatchPerformative(ACLMessage.REQUEST);
+        AGVInteraction agvCommunication = new AGVInteraction(t);
+
+        addBehaviour(new LotProcessingLastBehaviour());
         addBehaviour(responderContract);
+        addBehaviour(agvCommunication);
 
     }
 
@@ -295,6 +300,50 @@ public class MachineAgent extends Agent implements Drawable{
             if(lotProduced)
                 return true;
             return false;
+        }
+
+    }
+
+    /**
+     * Behaviour of processing lots - last phase machines
+     */
+    protected class LotProcessingLastBehaviour extends CyclicBehaviour {
+
+        @Override
+        public void action() {
+
+            // if there are lots to process
+            if(lotsProducing > 0) {
+
+                try {
+                    image = ImageIO.read(new File("src/red.png"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                System.out.println("[ " + myAgent.getAID() +  "] Producing lot");
+                // if the lot is not finished processing
+                if (timeToFinishLot > 0) {
+                    decrementTimeLot();
+                    int print = timeToFinishLot+1;
+                    System.out.println("[ " + myAgent.getAID() +  "] Decrementing lot time. Goes from " + print + " to " + timeToFinishLot);
+                } else if (timeToFinishLot == 0) {
+                    System.out.println("[ " + myAgent.getAID() +  "] Lot finished");
+                    // decrement number of lots producing
+                    removeLot();
+                    // restart the timeToFinishLot variable
+                    timeToFinishLot = 10/velocity;
+                    // negotiate passage of the lot to another machine
+                    System.out.println("[ " + myAgent.getAID() +  "] lotsLeft: " + lotsProducing + " and timeToFinish: " + timeToFinishLot);
+
+                    try {
+                        image = ImageIO.read(new File("src/machine.jpg"));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
         }
 
     }
@@ -532,7 +581,7 @@ public class MachineAgent extends Agent implements Drawable{
         if(lotsProducing > 0)
             potential = 1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity);
         else
-            potential = 80*(1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity));
+            potential = capacity*velocity*(1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity));
     }
 
     /**
