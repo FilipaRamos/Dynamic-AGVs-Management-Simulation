@@ -167,6 +167,11 @@ public class AGVAgent extends Agent implements Drawable {
         ArrayList<Point> requests = points;
 
         double distancePower = calculateDistance(newStepStart.x, newStepStart.y, powerX, powerY);
+
+        System.out.println("x1: "+newStepEnd.x);
+        System.out.println("y1: "+newStepEnd.y);
+        System.out.println("x2: "+powerX);
+        System.out.println("y2: "+powerY);
         double distancePowerFinal = calculateDistance(newStepEnd.x, newStepEnd.y, powerX, powerY);
 
         if(distancePower > initialPower)
