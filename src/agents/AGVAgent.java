@@ -14,6 +14,10 @@ import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
+import java.awt.font.TextAttribute;
+import java.awt.image.BufferedImage;
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -55,9 +59,10 @@ public class AGVAgent extends Agent implements Drawable {
     private Point[] currentPath;
 
     private static int IDNumber = 0;
-    private int ID;
+    private final int ID;
 
     private Point powerStation;
+    private BufferedImage bi;
 
     /**
      * Constructor of an AGV agent
@@ -715,8 +720,13 @@ public class AGVAgent extends Agent implements Drawable {
 
     @Override
     public void draw(SimGraphics G) {
-        Image im =  images.getImage(initialPower,power,maxCapacity,currentCapacity);
-        G.drawImageToFit(im);
+        G.drawImageToFit(images.getImage(initialPower,power,maxCapacity,currentCapacity));
+        bi = new BufferedImage(250,250,BufferedImage.TRANSLUCENT);
+        Graphics f1 = bi.getGraphics();
+        f1.setFont(new Font("TimesRoman",Font.BOLD,150));
+        f1.setColor(Color.red);
+        f1.drawString(this.getID()+"",90,150);
+        G.drawImageToFit(bi);
     }
 
     @Override
@@ -743,6 +753,10 @@ public class AGVAgent extends Agent implements Drawable {
 
     public void setPower(int power) {
         this.power = power;
+    }
+
+    public int getPointsSize(){
+        return points.size();
     }
 
     /**
@@ -795,4 +809,7 @@ public class AGVAgent extends Agent implements Drawable {
         this.maxCapacity = maxCapacity;
     }
 
+    public ArrayList<String> getStatistics() {
+        return statistics;
+    }
 }

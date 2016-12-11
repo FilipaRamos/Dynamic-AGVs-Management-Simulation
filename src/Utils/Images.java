@@ -12,7 +12,7 @@ import java.util.HashMap;
  * Created by danie on 10/12/2016.
  */
 public class Images {
-    private HashMap images = new HashMap();
+    private final HashMap images = new HashMap();
 
     public Images() {
         try {

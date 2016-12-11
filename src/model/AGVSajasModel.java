@@ -22,7 +22,6 @@ import uchicago.src.sim.analysis.OpenSequenceGraph;
 import uchicago.src.sim.analysis.Sequence;
 
 import javax.xml.parsers.ParserConfigurationException;
-import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,23 +32,18 @@ public class AGVSajasModel extends Repast3Launcher {
 	private static final boolean BATCH_MODE = true;
 	public static final boolean SEPARATE_CONTAINERS = false;
 	public static final boolean SHOW_LOTS_PER_PHASE_GRAPH = true;
+	public static final boolean SHOW_NUM_REQUESTS_PER_AGV = true;
 	public static Images images;
 
 	private Space space;
 	private DisplaySurface displaySurf;
 
-	//histogram data
+
 	private ArrayList<Phase> lotsPerPhase;
 	//opensequencegraph
 	private OpenSequenceGraph lotsOnPhases;
+	private OpenSequenceGraph numRequestsAgvs;
 
-	public boolean isShow_lots_per_phase_graph() {
-		return Show_lots_per_phase_graph;
-	}
-
-	public void setShow_lots_per_phase_graph(boolean show_lots_per_phase_graph) {
-		Show_lots_per_phase_graph = show_lots_per_phase_graph;
-	}
 
 	class Phases implements DataSource, Sequence {
 		private int phase = -1;
@@ -70,6 +64,26 @@ public class AGVSajasModel extends Repast3Launcher {
 		}
 	}
 
+	class Requests implements DataSource, Sequence {
+		private int agv = -1;
+
+
+		public Requests(int agv){
+			this.agv=agv;
+		}
+		public Object execute() {
+			return new Double(getSValue());
+		}
+
+		public double getSValue() {
+			if(agv == -1)
+				return 0;
+			else
+				return (double)agvAgents.get(agv).getPointsSize();
+		}
+
+	}
+
 
 	private Parser parser;
 
@@ -85,6 +99,7 @@ public class AGVSajasModel extends Repast3Launcher {
 
 	private boolean separate_containers = SEPARATE_CONTAINERS;
 	private boolean Show_lots_per_phase_graph = SHOW_LOTS_PER_PHASE_GRAPH;
+	private boolean Show_num_requests_per_agv = SHOW_NUM_REQUESTS_PER_AGV;
 
 	private boolean runInBatchMode;
 	
@@ -112,7 +127,7 @@ public class AGVSajasModel extends Repast3Launcher {
 	//Variáveis que defini e que são necessárias!
 	@Override
 	public String[] getInitParam() {
-		return new String[] {"separate_containers","Show_lots_per_phase_graph"};
+		return new String[] {"separate_containers","Show_lots_per_phase_graph","Show_num_requests_per_agv"};
 	}
 
 	@Override
@@ -223,15 +238,37 @@ public class AGVSajasModel extends Repast3Launcher {
 
 
 
-
 		addSimEventListener(displaySurf);
 		System.out.println("Running BuildDisplay");
 		buildDisplayAgents();
 
 		if(Show_lots_per_phase_graph)
 			buildLotsPerPhaseGraph();
+		if(Show_num_requests_per_agv)
+			buildNumRequests_per_agv();
 		displaySurf.display();
 
+	}
+
+	private void buildNumRequests_per_agv(){
+		if(numRequestsAgvs !=null)
+			numRequestsAgvs.dispose();
+		numRequestsAgvs = null;
+		numRequestsAgvs = new OpenSequenceGraph("Requests per AGV over ticks",this);
+		numRequestsAgvs.setYRange(0,1);
+		this.registerMediaProducer("Plot", numRequestsAgvs);
+
+		class requestsNumUpdate extends BasicAction {
+			public void execute(){
+				numRequestsAgvs.step();
+			}
+		}
+		schedule.scheduleActionAtInterval(10, new requestsNumUpdate());
+
+		for(int i = 0; i < agvAgents.size();i++){
+			numRequestsAgvs.addSequence("AGV "+ agvAgents.get(i).getAID().getLocalName(), new Requests(i));
+		}
+		numRequestsAgvs.display();
 	}
 
 	private void buildLotsPerPhaseGraph() {
@@ -241,7 +278,7 @@ public class AGVSajasModel extends Repast3Launcher {
 			lotsOnPhases.dispose();
 		}
 		lotsOnPhases = null;
-		lotsOnPhases = new OpenSequenceGraph("Lots",this);
+		lotsOnPhases = new OpenSequenceGraph("Lots Per Phase over ticks",this);
 		this.registerMediaProducer("Plot", lotsOnPhases);
 
 		class phasesUpdateInGraph extends BasicAction {
@@ -342,5 +379,29 @@ public class AGVSajasModel extends Repast3Launcher {
 		public void setLots(int lots){
 			this.lots=lots;
 		}
+	}
+
+	public boolean isShow_num_requests_per_agv() {
+		return Show_num_requests_per_agv;
+	}
+
+	public void setShow_num_requests_per_agv(boolean show_num_requests_per_agv) {
+		Show_num_requests_per_agv = show_num_requests_per_agv;
+	}
+
+	public boolean isShow_lots_per_phase_graph() {
+		return Show_lots_per_phase_graph;
+	}
+
+	public void setShow_lots_per_phase_graph(boolean show_lots_per_phase_graph) {
+		Show_lots_per_phase_graph = show_lots_per_phase_graph;
+	}
+
+	public int getTotalRequests(){
+		int total = 0;
+		for(int i = 0; i < agvAgents.size();i++){
+			total+= agvAgents.get(i).getStatistics().size();
+		}
+		return total;
 	}
 }
