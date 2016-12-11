@@ -12,23 +12,63 @@ import sajas.core.Runtime;
 import sajas.sim.repast3.Repast3Launcher;
 import sajas.wrapper.ContainerController;
 import spaces.Space;
+import uchicago.src.sim.engine.BasicAction;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
 import uchicago.src.sim.gui.DisplaySurface;
 import uchicago.src.sim.gui.Object2DDisplay;
+import uchicago.src.sim.analysis.DataSource;
+import uchicago.src.sim.analysis.OpenSequenceGraph;
+import uchicago.src.sim.analysis.Sequence;
 
 import javax.xml.parsers.ParserConfigurationException;
+import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 
 public class AGVSajasModel extends Repast3Launcher {
 
 	private static final boolean BATCH_MODE = true;
 	public static final boolean SEPARATE_CONTAINERS = false;
+	public static final boolean SHOW_LOTS_PER_PHASE_GRAPH = true;
 	public static Images images;
 
 	private Space space;
 	private DisplaySurface displaySurf;
+
+	//histogram data
+	private ArrayList<Phase> lotsPerPhase;
+	//opensequencegraph
+	private OpenSequenceGraph lotsOnPhases;
+
+	public boolean isShow_lots_per_phase_graph() {
+		return Show_lots_per_phase_graph;
+	}
+
+	public void setShow_lots_per_phase_graph(boolean show_lots_per_phase_graph) {
+		Show_lots_per_phase_graph = show_lots_per_phase_graph;
+	}
+
+	class Phases implements DataSource, Sequence {
+		private int phase = -1;
+
+
+		public Phases(int phase){
+			this.phase=phase;
+		}
+		public Object execute() {
+			if(phase == -1)
+				return 0;
+			else
+				return new Double(getSValue());
+		}
+
+		public double getSValue() {
+			return (double)lotsPerPhase.get(phase).getLots();
+		}
+	}
 
 
 	private Parser parser;
@@ -44,7 +84,7 @@ public class AGVSajasModel extends Repast3Launcher {
 	private Schedule schedule;
 
 	private boolean separate_containers = SEPARATE_CONTAINERS;
-
+	private boolean Show_lots_per_phase_graph = SHOW_LOTS_PER_PHASE_GRAPH;
 
 	private boolean runInBatchMode;
 	
@@ -72,7 +112,7 @@ public class AGVSajasModel extends Repast3Launcher {
 	//Variáveis que defini e que são necessárias!
 	@Override
 	public String[] getInitParam() {
-		return new String[] {"separate_containers","WORLD_X_SIZE","WORLD_Y_SIZE","num_agv_agents","agv_power","machines_and_phases","machines_max_capacity","machines_speed"};
+		return new String[] {"separate_containers","Show_lots_per_phase_graph"};
 	}
 
 	@Override
@@ -168,8 +208,12 @@ public class AGVSajasModel extends Repast3Launcher {
 		displaySurf = null;
 		displaySurf = new DisplaySurface(this, "AGV Model Window 1");
 
+
+
+
 		// Register Displays
 		registerDisplaySurface("AGV Model Window 1", displaySurf);
+
 
 		//Build schedule
 		schedule = getSchedule();
@@ -177,11 +221,41 @@ public class AGVSajasModel extends Repast3Launcher {
 		System.out.println("Running BuildSchedule");
 		schedule.scheduleActionAtInterval(1, displaySurf, "updateDisplay", Schedule.LAST);
 
+
+
+
 		addSimEventListener(displaySurf);
 		System.out.println("Running BuildDisplay");
 		buildDisplayAgents();
 
+		if(Show_lots_per_phase_graph)
+			buildLotsPerPhaseGraph();
 		displaySurf.display();
+
+	}
+
+	private void buildLotsPerPhaseGraph() {
+		lotsPerPhase = getNumberLotsPerPhase();
+		//graph
+		if (lotsOnPhases != null){
+			lotsOnPhases.dispose();
+		}
+		lotsOnPhases = null;
+		lotsOnPhases = new OpenSequenceGraph("Lots",this);
+		this.registerMediaProducer("Plot", lotsOnPhases);
+
+		class phasesUpdateInGraph extends BasicAction {
+			public void execute(){
+				updateHistogramNumberLotsPerPhase();
+				lotsOnPhases.step();
+			}
+		}
+		schedule.scheduleActionAtInterval(10, new phasesUpdateInGraph());
+
+		for(int i = 0; i < lotsPerPhase.size();i++){
+			lotsOnPhases.addSequence("Lots in phase "+(i+1), new Phases(i));
+		}
+		lotsOnPhases.display();
 	}
 
 	public void buildDisplayAgents() {
@@ -217,5 +291,58 @@ public class AGVSajasModel extends Repast3Launcher {
 
 	public void setSeparate_containers(boolean separate_containers) {
 		this.separate_containers = separate_containers;
+	}
+
+	public ArrayList<Phase>  getNumberLotsPerPhase(){
+		HashMap<Integer,Integer> lotsPerPhase = new HashMap<>();
+
+		for(int i = 0; i < machineAgents.size();i++){
+			MachineAgent m = machineAgents.get(i);
+			if(m.getProcessingStep() == 2)
+				System.out.println("Numero de lotes->"+m.getLotsProducing());
+			int phase = m.getProcessingStep();
+			if(lotsPerPhase.containsKey(phase)){
+				int temp = lotsPerPhase.get(phase);
+				lotsPerPhase.replace(phase,temp + m.getLotsProducing());
+			}
+			else
+				lotsPerPhase.put(m.getProcessingStep(),m.getLotsProducing());
+		}
+		ArrayList<Phase> res = new ArrayList<>();
+		Iterator<Integer> keySetIterator = lotsPerPhase.keySet().iterator();
+		while(keySetIterator.hasNext()){
+			Integer key = keySetIterator.next();
+			res.add(new Phase(key,lotsPerPhase.get(key)));
+		}
+		return res;
+	}
+
+	public void updateHistogramNumberLotsPerPhase(){
+		ArrayList<Phase> temp = getNumberLotsPerPhase();
+		for(int i = 0; i < temp.size();i++){
+			Phase p = temp.get(i);
+			lotsPerPhase.get(i).setLots(p.getLots());
+		}
+	}
+
+	class Phase {
+		private int phase;
+		private int lots;
+		public Phase(int phase, int lots){
+			this.phase=phase;
+			this.lots=lots;
+		}
+
+		public int getPhase() {
+			return phase;
+		}
+
+		public int getLots() {
+			return lots;
+		}
+
+		public void setLots(int lots){
+			this.lots=lots;
+		}
 	}
 }

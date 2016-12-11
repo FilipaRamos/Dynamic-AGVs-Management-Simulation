@@ -1,5 +1,7 @@
 package Utils;
 
+import com.bbn.openmap.omGraphics.grid.GridData;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.File;
@@ -35,11 +37,24 @@ public class Images {
         return (Image) images.get(im);
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         Images im = new Images();
         Image img = im.getImage(10,10,50,20);
         if(img == null)
             System.out.println("é nulo");
+    }*/
+    public static void main(String[] args)
+    {
+        HashMap<Integer,Integer> lotsPerPhase = new HashMap<Integer,Integer>();
+        lotsPerPhase.put(1,5);
+        lotsPerPhase.put(2,2);
+        lotsPerPhase.put(3,7);
+        lotsPerPhase.put(4,10);
+
+        int x = lotsPerPhase.get(1);
+        lotsPerPhase.replace(1,x+5);
+        System.out.println("lots: "+lotsPerPhase.get(1));
+
     }
 }
 
