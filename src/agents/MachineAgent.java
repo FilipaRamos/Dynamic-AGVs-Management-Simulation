@@ -565,7 +565,7 @@ public class MachineAgent extends Agent implements Drawable{
         }
 
         protected void requestLotPickup(){
-            lotsProducing--;
+            //lotsProducing--;
         }
         protected void requestLotDrop(){
             lotsProducing++;

@@ -163,4 +163,5 @@ public class Parser {
     public void setPower_station_y(int power_station_y) {
         this.power_station_y = power_station_y;
     }
+
 }

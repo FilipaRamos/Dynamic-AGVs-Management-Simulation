@@ -1,5 +1,7 @@
 package Utils;
 
+import com.bbn.openmap.omGraphics.grid.GridData;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.File;
@@ -10,7 +12,7 @@ import java.util.HashMap;
  * Created by danie on 10/12/2016.
  */
 public class Images {
-    private HashMap images = new HashMap();
+    private final HashMap images = new HashMap();
 
     public Images() {
         try {
