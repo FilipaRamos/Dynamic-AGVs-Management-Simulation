@@ -41,7 +41,7 @@ public class AGVAgent extends Agent implements Drawable {
 
     // queue of requests
     private Queue<String> requests = new LinkedList<String>();
-    private Queue<String> modifiedRequests = new LinkedList<>();
+    private ArrayList<String> statistics = new ArrayList<>();
     // location of the machines
     private ArrayList<MachineLocation> machinesLocations;
     // list of points to visit
@@ -712,6 +712,7 @@ public class AGVAgent extends Agent implements Drawable {
 
     public void addRequest(String request){
         requests.add(request);
+        statistics.add(request);
     }
 
     @Override
