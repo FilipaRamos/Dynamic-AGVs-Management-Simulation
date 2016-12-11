@@ -17,7 +17,7 @@ public class Images {
     public Images() {
         try {
             for (int i = 1; i <= 5; i++) {
-                for (int x = 0; x < 8; x++) {
+                for (int x = 1; x <= 8; x++) {
                     String name = i + "_" + x;
                     Image image = ImageIO.read(new File("src/AGVimages/" + name+".jpg"));
                     images.put(name, image);
@@ -33,7 +33,10 @@ public class Images {
         int cap = currentCapacity*8/maxCapacity;
         if(bat == 0)
             bat=1;
+        if(cap == 0)
+            cap = 1;
         String im = bat+"_"+cap;
+        System.out.println("IMAGE-> "+im);
         return (Image) images.get(im);
     }
 
