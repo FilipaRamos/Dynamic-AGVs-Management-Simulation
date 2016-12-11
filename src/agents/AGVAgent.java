@@ -387,7 +387,7 @@ public class AGVAgent extends Agent implements Drawable {
 
             if(points.size() > 0) {
                 if(tick == 0){
-                    if(currentCapacity < maxCapacity)
+                    if(getCurrentCapacity() < maxCapacity)
                         sortPoints();
                     // it's at the destination
                     if(x == points.get(0).x && y == points.get(0).y){
@@ -465,30 +465,35 @@ public class AGVAgent extends Agent implements Drawable {
             }
         }
 
-        Point start = null;
-        Point end = null;
-        boolean add = false;
-        if(index < (points.size()-1)) {
-            for (int j = (index + 1); j < points.size(); j++) {
-                if(equalPoints(points.get(j), p)){
-                    start = points.get(j);
-                    end = points.get(j+1);
-                    add = true;
-                    break;
+        if((currentCapacity + points.get(index).nrLots) < maxCapacity) {
+
+            Point start = null;
+            Point end = null;
+            boolean add = false;
+            if (index < (points.size() - 1)) {
+                for (int j = (index + 1); j < points.size(); j++) {
+                    if (equalPoints(points.get(j), p)) {
+                        start = points.get(j);
+                        end = points.get(j + 1);
+                        add = true;
+                        break;
+                    }
                 }
             }
-        }
 
-        if(add) {
-            points.get(index).nrLots++;
-            points.add(index + 2, end);
-        }
+            if (add) {
+                points.get(index).nrLots++;
+                points.add(index + 2, end);
+            }
 
-        System.out.println(points.size());
-        for(int k = 0; k < points.size(); k++){
-            System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
+            System.out.println(points.size());
+            for (int k = 0; k < points.size(); k++) {
+                System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
+            }
+            System.out.println();
+        }else {
+            System.out.println("NAO FAZEMOS NADA");
         }
-        System.out.println();
 
     }
 
