@@ -127,7 +127,7 @@ public class AGVSajasModel extends Repast3Launcher {
 	//Variáveis que defini e que são necessárias!
 	@Override
 	public String[] getInitParam() {
-		return new String[] {"separate_containers","Show_lots_per_phase_graph","Show_num_requests_per_agv"};
+		return new String[] {"Show_lots_per_phase_graph","Show_num_requests_per_agv"};
 	}
 
 	@Override
