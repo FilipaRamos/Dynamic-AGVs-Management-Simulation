@@ -554,21 +554,25 @@ public class MachineAgent extends Agent implements Drawable{
             if (msg != null) {
                 System.out.println(myAgent.getLocalName() + " received REQUEST FROM " + msg.getSender() + " with " + msg.getContent());
 
+                String[] splitted = msg.getContent().split("&");
+
                 // Message received. Process it
-                if(msg.getContent().equals("pickup"))
-                    requestLotPickup();
-                else if(msg.getContent().equals("drop"))
-                    requestLotDrop();
+                if(splitted[0].equals("pickup"))
+                    requestLotPickup(splitted[1]);
+                else if(splitted[0].equals("drop"))
+                    requestLotDrop(splitted[1]);
 
                 report();
             }
         }
 
-        protected void requestLotPickup(){
+        protected void requestLotPickup(String nr){
             //lotsProducing--;
         }
-        protected void requestLotDrop(){
-            lotsProducing++;
+        protected void requestLotDrop(String nr){
+
+            int lots = Integer.parseInt(nr);
+            lotsProducing += lots;
         }
 
 

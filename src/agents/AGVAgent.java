@@ -14,10 +14,7 @@ import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
-import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
-import java.text.AttributedCharacterIterator;
-import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -80,7 +77,7 @@ public class AGVAgent extends Agent implements Drawable {
         initialPower = power;
         this.powerX = powerX;
         this.powerY = powerY;
-        powerStation = new Point(powerX, powerY, "power");
+        powerStation = new Point(powerX, powerY, "power", 0);
         IDNumber++;
         ID = IDNumber;
 
@@ -390,17 +387,19 @@ public class AGVAgent extends Agent implements Drawable {
 
             if(points.size() > 0) {
                 if(tick == 0){
+                    if(currentCapacity < maxCapacity)
+                        sortPoints();
                     // it's at the destination
                     if(x == points.get(0).x && y == points.get(0).y){
                         // it's a delivery point
                         if(points.get(0).type.equals("drop")){
                             if(request(points.get(0), "drop"))
-                                currentCapacity--;
+                                currentCapacity -= points.get(0).nrLots;
                         }
                         //it's a pickup location
                         else if(points.get(0).type.equals("pickup")){
                             if(request(points.get(0), "pickup"))
-                                currentCapacity++;
+                                currentCapacity += points.get(0).nrLots;
                         }
                         // it's the power station
                         else if(points.get(0).type.equals("power")){
@@ -449,40 +448,65 @@ public class AGVAgent extends Agent implements Drawable {
      */
     protected void sortPoints(){
 
-        ArrayList<Point> pointsTemp = new ArrayList<>();
-        ArrayList<Point> pickups = new ArrayList<>();
+        System.out.println("START! " + points.size());
+        for(int k = 0; k < points.size(); k++){
+            System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ") [" + points.get(k).type + "]");
+        }
+        System.out.println();
 
-        for(int i = 0; i < points.size(); i++){
-            if(points.get(i).type.equals("pickup")) {
-                pointsTemp = trimArray(i, points);
-                for (int j = 0; j < pointsTemp.size(); j++) {
-                    if (pointsTemp.get(j).x == pointsTemp.get(i).x &&
-                            pointsTemp.get(j).y == pointsTemp.get(i).y &&
-                            pointsTemp.get(j).type.equals(pointsTemp.get(i).type)) {
-                        System.out.println("INSIDE IF first:" + pointsTemp.get(i).x + pointsTemp.get(i).y);
-                        if (simulateOrder(pointsTemp, pointsTemp.get(j), i + 1)) {
-                            pickups.add(pointsTemp.get(j));
-                            System.out.println("Added to pickup.");
-                        }
-                    }
-                }
-                for (int k = 0; k < pickups.size(); k++) {
-                    points.add(i + 1, pickups.get(k));
-                }
-                if(pickups.size() > 0){
-                    i++;
-                    pickups.clear();
-                    System.out.println("INSIDE PICKUP");
+        Point p = null;
+        int index = 0;
+
+        for(int i = 0; i < points.size(); i++) {
+            if (points.get(i).type.equals("pickup")) {
+                p = points.get(i);
+                index = i;
+                break;
+            }
+        }
+
+        Point start = null;
+        Point end = null;
+        boolean add = false;
+        if(index < (points.size()-1)) {
+            for (int j = (index + 1); j < points.size(); j++) {
+                if(equalPoints(points.get(j), p)){
+                    start = points.get(j);
+                    end = points.get(j+1);
+                    add = true;
+                    break;
                 }
             }
         }
 
-        System.out.println();
+        if(add) {
+            points.get(index).nrLots++;
+            points.add(index + 2, end);
+        }
+
+        System.out.println(points.size());
         for(int k = 0; k < points.size(); k++){
             System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
         }
         System.out.println();
 
+    }
+
+    /**
+     * Compares 2 points
+     * @param p1
+     * @param p2
+     * @return
+     */
+    protected boolean equalPoints(Point p1, Point p2){
+        if(p1.x == p2.x){
+            if(p1.y == p1.y){
+                if(p1.type.equals(p2.type))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -546,12 +570,12 @@ public class AGVAgent extends Agent implements Drawable {
             // pass requests to arraylist of points
             String[] splitted = requests.poll().split("&");
             Point pickup = getPoint(splitted[0], "pickup");
+            pickup.nrLots = 1;
             Point drop = getPoint(splitted[1], "drop");
+            drop.nrLots = 1;
             points.add(pickup);
             points.add(drop);
         }
-
-        //sortPoints();
 
     }
 
@@ -581,7 +605,7 @@ public class AGVAgent extends Agent implements Drawable {
 
         for(int i = 0; i < machinesLocations.size(); i++){
             if(machinesLocations.get(i).aid.toString().equals(AID)){
-                p = new Point(machinesLocations.get(i).x, machinesLocations.get(i).y, type);
+                p = new Point(machinesLocations.get(i).x, machinesLocations.get(i).y, type, 1);
             }
         }
 
@@ -615,12 +639,12 @@ public class AGVAgent extends Agent implements Drawable {
 
         if(toSend != null) {
             ACLMessage request = new ACLMessage(ACLMessage.REQUEST);
-            request.setContent(type);
+            request.setContent(type + "&" + p.nrLots);
             request.addReceiver(toSend);
 
             send(request);
 
-            System.out.println("AGV requesting " + type + " from " + getPointAID(p));
+            System.out.println("AGV requesting " + type + " from " + getPointAID(p) + " with " + p.nrLots + " lots.");
 
             return true;
 
@@ -713,11 +737,13 @@ public class AGVAgent extends Agent implements Drawable {
         public int x;
         public int y;
         public String type;
+        public int nrLots;
 
-        public Point(int x, int y, String type){
+        public Point(int x, int y, String type, int nrLots){
             this.x = x;
             this.y = y;
             this.type = type;
+            this.nrLots = nrLots;
         }
 
     }
