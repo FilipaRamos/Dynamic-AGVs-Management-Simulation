@@ -309,38 +309,52 @@ public class MachineAgent extends Agent implements Drawable{
      */
     protected class LotProcessingLastBehaviour extends CyclicBehaviour {
 
+        protected int tick = 50;
+        protected boolean inProcessing = false;
+
         @Override
         public void action() {
 
-            // if there are lots to process
-            if(lotsProducing > 0) {
-
-                try {
-                    image = ImageIO.read(new File("src/red.png"));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                System.out.println("[ " + myAgent.getAID() +  "] Producing lot");
-                // if the lot is not finished processing
-                if (timeToFinishLot > 0) {
-                    decrementTimeLot();
-                    int print = timeToFinishLot+1;
-                    System.out.println("[ " + myAgent.getAID() +  "] Decrementing lot time. Goes from " + print + " to " + timeToFinishLot);
-                } else if (timeToFinishLot == 0) {
-                    System.out.println("[ " + myAgent.getAID() +  "] Lot finished");
-                    // decrement number of lots producing
-                    removeLot();
-                    // restart the timeToFinishLot variable
-                    timeToFinishLot = 10/velocity;
-                    // negotiate passage of the lot to another machine
-                    System.out.println("[ " + myAgent.getAID() +  "] lotsLeft: " + lotsProducing + " and timeToFinish: " + timeToFinishLot);
+            if(!inProcessing){
+                tick--;
+                if(tick == 0)
+                    inProcessing = true;
+            }else {
+                // if there are lots to process
+                if (lotsProducing > 0) {
 
                     try {
-                        image = ImageIO.read(new File("src/machine.jpg"));
+                        image = ImageIO.read(new File("src/red.png"));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
+
+                    System.out.println("[ " + myAgent.getAID() + "] Producing lot");
+                    // if the lot is not finished processing
+                    if (timeToFinishLot > 0) {
+                        inProcessing = true;
+                        decrementTimeLot();
+                        int print = timeToFinishLot + 1;
+                        System.out.println("[ " + myAgent.getAID() + "] Decrementing lot time. Goes from " + print + " to " + timeToFinishLot);
+                    } else if (timeToFinishLot == 0) {
+                        inProcessing = false;
+                        tick = 50;
+                        System.out.println("[ " + myAgent.getAID() + "] Lot finished");
+                        // decrement number of lots producing
+                        removeLot();
+                        // restart the timeToFinishLot variable
+                        timeToFinishLot = 10 / velocity;
+                        // negotiate passage of the lot to another machine
+                        System.out.println("[ " + myAgent.getAID() + "] lotsLeft: " + lotsProducing + " and timeToFinish: " + timeToFinishLot);
+
+                        try {
+                            image = ImageIO.read(new File("src/machine.jpg"));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+
                 }
             }
 

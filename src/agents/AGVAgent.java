@@ -486,13 +486,21 @@ public class AGVAgent extends Agent implements Drawable {
                 points.add(index + 2, end);
             }
 
+            organiseDrops();
+
             System.out.println(points.size());
             for (int k = 0; k < points.size(); k++) {
                 System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
             }
             System.out.println();
-        }else {
-            System.out.println("NAO FAZEMOS NADA");
+        }
+
+    }
+
+    protected void organiseDrops(){
+
+        for(int i = 0; i < points.size(); i++){
+
         }
 
     }
