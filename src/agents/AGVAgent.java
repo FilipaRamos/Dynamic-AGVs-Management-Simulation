@@ -451,18 +451,19 @@ public class AGVAgent extends Agent implements Drawable {
      */
     protected void sortPoints(){
 
+        ArrayList<Point> pointsTemp = new ArrayList<>();
         ArrayList<Point> pickups = new ArrayList<>();
 
         for(int i = 0; i < points.size(); i++){
             if(points.get(i).type.equals("pickup")) {
-                for (int j = (i + 1); j < points.size(); j++) {
-                    System.out.println(j);
-                    if (points.get(j).x == points.get(i).x &&
-                            points.get(j).y == points.get(i).y &&
-                            points.get(j).type.equals(points.get(i).type)) {
-                        System.out.println("INSIDE IF first:" + points.get(i).x + points.get(i).y);
-                        if (simulateOrder(points, points.get(j), i + 1)) {
-                            pickups.add(points.get(j));
+                pointsTemp = trimArray(i, points);
+                for (int j = 0; j < pointsTemp.size(); j++) {
+                    if (pointsTemp.get(j).x == pointsTemp.get(i).x &&
+                            pointsTemp.get(j).y == pointsTemp.get(i).y &&
+                            pointsTemp.get(j).type.equals(pointsTemp.get(i).type)) {
+                        System.out.println("INSIDE IF first:" + pointsTemp.get(i).x + pointsTemp.get(i).y);
+                        if (simulateOrder(pointsTemp, pointsTemp.get(j), i + 1)) {
+                            pickups.add(pointsTemp.get(j));
                             System.out.println("Added to pickup.");
                         }
                     }
@@ -492,8 +493,16 @@ public class AGVAgent extends Agent implements Drawable {
      * @param points arraylist to count
      * @return number of elements
      */
-    protected int getTrimSize(int index, ArrayList<Point> points){
-        return points.size() - (index+1);
+    protected ArrayList<Point> trimArray(int index, ArrayList<Point> points){
+
+        ArrayList<Point> result = new ArrayList<>();
+
+        for(int i = index; i < points.size(); i++){
+            result.add(points.get(i));
+        }
+
+        return result;
+
     }
 
     protected boolean simulateOrder(ArrayList<Point> pointsTemp, Point p, int index){
