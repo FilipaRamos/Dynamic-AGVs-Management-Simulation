@@ -298,8 +298,6 @@ public class AGVSajasModel extends Repast3Launcher {
 
 		for(int i = 0; i < machineAgents.size();i++){
 			MachineAgent m = machineAgents.get(i);
-			if(m.getProcessingStep() == 2)
-				System.out.println("Numero de lotes->"+m.getLotsProducing());
 			int phase = m.getProcessingStep();
 			if(lotsPerPhase.containsKey(phase)){
 				int temp = lotsPerPhase.get(phase);
