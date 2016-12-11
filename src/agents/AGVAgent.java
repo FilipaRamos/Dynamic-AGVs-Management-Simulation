@@ -15,7 +15,6 @@ import uchicago.src.sim.gui.SimGraphics;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -360,7 +359,11 @@ public class AGVAgent extends Agent implements Drawable {
             if(points.size() > 0) {
                 distFinalCargo = calculateDistance(points.get(points.size() - 1).x, points.get(points.size() - 1).y,
                         getPoint(start, "pickup").x, getPoint(start, "pickup").y);
-                nrPowers = Collections.frequency(points, powerStation);
+                if(power == initialPower){
+                    nrPowers = 0;
+                }else{
+                    nrPowers = initialPower*power;
+                }
                 totalDist = calculateTotalDistance(points);
             }else{
                 distFinalCargo = calculateDistance(x, y,
@@ -416,6 +419,7 @@ public class AGVAgent extends Agent implements Drawable {
                         if(!charging) {
                             // update coordinates on the movement to the next destination
                             updateCoordinates(points.get(0));
+                            power--;
                         }
                     }
                 }
@@ -424,8 +428,10 @@ public class AGVAgent extends Agent implements Drawable {
             if(charging){
                 tick = initialPower;
                 tick--;
-                if(power == initialPower)
+                if(power == initialPower) {
                     charging = false;
+                    tick = 50;
+                }
                 if(charging)
                     power++;
             }else {
@@ -445,37 +451,38 @@ public class AGVAgent extends Agent implements Drawable {
      */
     protected void sortPoints(){
 
-        ArrayList<Point> pointsTemp = points;
         ArrayList<Point> pickups = new ArrayList<>();
 
-        for(int i = 0; i < pointsTemp.size(); i++){
-            if(pointsTemp.get(i).type.equals("pickup")) {
-                //System.out.println("O I:" + pointsTemp.get(i).x + pointsTemp.get(i).y);
-                for (int j = i + 1; j < pointsTemp.size() - getTrimSize(i, pointsTemp); j++) {
+        for(int i = 0; i < points.size(); i++){
+            if(points.get(i).type.equals("pickup")) {
+                for (int j = (i + 1); j < points.size(); j++) {
                     System.out.println(j);
-                    if (pointsTemp.get(j).x == pointsTemp.get(i).x &&
-                            pointsTemp.get(j).y == pointsTemp.get(i).y &&
-                            pointsTemp.get(j).type.equals(pointsTemp.get(i).type)) {
-                        //System.out.println("INSIDE IF first:" + pointsTemp.get(i).x + pointsTemp.get(i).y);
-                        if (simulateOrder(pointsTemp, pointsTemp.get(j), i + 1)) {
-                            pickups.add(pointsTemp.get(j));
+                    if (points.get(j).x == points.get(i).x &&
+                            points.get(j).y == points.get(i).y &&
+                            points.get(j).type.equals(points.get(i).type)) {
+                        System.out.println("INSIDE IF first:" + points.get(i).x + points.get(i).y);
+                        if (simulateOrder(points, points.get(j), i + 1)) {
+                            pickups.add(points.get(j));
                             System.out.println("Added to pickup.");
                         }
                     }
                 }
-                for (int k = 0; k < pickups.size(); k++)
+                for (int k = 0; k < pickups.size(); k++) {
                     points.add(i + 1, pickups.get(k));
-                pickups.clear();
-                System.out.println("INSIDE PICKUP");
+                }
+                if(pickups.size() > 0){
+                    i++;
+                    pickups.clear();
+                    System.out.println("INSIDE PICKUP");
+                }
             }
         }
 
-        /*System.out.println();
+        System.out.println();
         for(int k = 0; k < points.size(); k++){
             System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
         }
-
-        System.out.println();*/
+        System.out.println();
 
     }
 
@@ -537,7 +544,7 @@ public class AGVAgent extends Agent implements Drawable {
             points.add(drop);
         }
 
-        sortPoints();
+        //sortPoints();
 
     }
 
@@ -587,8 +594,6 @@ public class AGVAgent extends Agent implements Drawable {
             y--;
         else if (y < p.y)
             y++;
-
-        power--;
     }
 
     /**
