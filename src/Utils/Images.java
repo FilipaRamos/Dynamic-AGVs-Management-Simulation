@@ -29,10 +29,12 @@ public class Images {
     public Image getImage(int initialPower,int power,int maxCapacity, int currentCapacity) {
         int bat = power*5/initialPower;
         int cap = currentCapacity*8/maxCapacity;
+        System.out.println("MERDA: "+currentCapacity);
         if(bat == 0)
             bat=1;
-        if(cap == 0)
-            cap = 1;
+        cap++;
+        if(cap > 8)
+            cap = 8;
         String im = bat+"_"+cap;
         return (Image) images.get(im);
     }

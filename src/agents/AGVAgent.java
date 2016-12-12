@@ -661,7 +661,7 @@ public class AGVAgent extends Agent implements Drawable {
 
             send(request);
 
-            System.out.println("AGV requesting " + type + " from " + getPointAID(p) + " with " + p.nrLots + " lots.");
+            System.out.println("AGV " + getLocalName() + " requesting " + type + " from " + getPointAID(p) + " with " + p.nrLots + " lots.");
 
             return true;
 
