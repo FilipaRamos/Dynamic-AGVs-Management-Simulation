@@ -1,7 +1,5 @@
 package Utils;
 
-import com.bbn.openmap.omGraphics.grid.GridData;
-
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.io.File;
@@ -36,7 +34,6 @@ public class Images {
         if(cap == 0)
             cap = 1;
         String im = bat+"_"+cap;
-        System.out.println("IMAGE-> "+im);
         return (Image) images.get(im);
     }
 

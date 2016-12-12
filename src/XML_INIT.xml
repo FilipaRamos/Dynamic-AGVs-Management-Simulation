@@ -13,19 +13,19 @@
 		<AGV_AGENT_CAPACITY>8</AGV_AGENT_CAPACITY>
 	</AGV_AGENTS>
 	<MACHINES_AGENTS>
-		<MACHINE_AGENT phase="1" id="1" lots="30">
+		<MACHINE_AGENT phase="1" id="1" lots="10">
 			<x>3</x>
 			<y>4</y>
 			<MACHINE_CAPACITY>50</MACHINE_CAPACITY>
 			<MACHINE_SPEED>25</MACHINE_SPEED>
 		</MACHINE_AGENT>
-		<MACHINE_AGENT phase="1" id="2" lots="15">
+		<MACHINE_AGENT phase="1" id="2" lots="10">
 			<x>3</x>
 			<y>10</y>
 			<MACHINE_CAPACITY>45</MACHINE_CAPACITY>
 			<MACHINE_SPEED>7</MACHINE_SPEED>
 		</MACHINE_AGENT>
-		<MACHINE_AGENT phase="2" id="1" lots="20">
+		<MACHINE_AGENT phase="2" id="1" lots="5">
 			<x>7</x>
 			<y>4</y>
 			<MACHINE_CAPACITY>57</MACHINE_CAPACITY>
@@ -37,13 +37,13 @@
 			<MACHINE_CAPACITY>41</MACHINE_CAPACITY>
 			<MACHINE_SPEED>14</MACHINE_SPEED>
 		</MACHINE_AGENT>
-		<MACHINE_AGENT phase="3" id="1" lots="10" last_phase="true">
+		<MACHINE_AGENT phase="3" id="1" lots="5" last_phase="true">
 			<x>11</x>
 			<y>4</y>
 			<MACHINE_CAPACITY>33</MACHINE_CAPACITY>
 			<MACHINE_SPEED>17</MACHINE_SPEED>
 		</MACHINE_AGENT>
-		<MACHINE_AGENT phase="3" id="2" lots="7" last_phase="true">
+		<MACHINE_AGENT phase="3" id="2" lots="5" last_phase="true">
 			<x>11</x>
 			<y>10</y>
 			<MACHINE_CAPACITY>20</MACHINE_CAPACITY>

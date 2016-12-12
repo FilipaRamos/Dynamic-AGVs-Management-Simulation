@@ -465,34 +465,38 @@ public class AGVAgent extends Agent implements Drawable {
             }
         }
 
-        if((currentCapacity + points.get(index).nrLots) < maxCapacity) {
+        if(p != null) {
+            if ((currentCapacity + points.get(index).nrLots) < maxCapacity) {
 
-            Point start = null;
-            Point end = null;
-            boolean add = false;
-            if (index < (points.size() - 1)) {
-                for (int j = (index + 1); j < points.size(); j++) {
-                    if (equalPoints(points.get(j), p)) {
-                        start = points.get(j);
-                        end = points.get(j + 1);
-                        add = true;
-                        break;
+                Point start = null;
+                Point end = null;
+                boolean add = false;
+                if (index < (points.size() - 1)) {
+                    for (int j = (index + 1); j < points.size(); j++) {
+                        if (equalPoints(points.get(j), p)) {
+                            start = points.get(j);
+                            end = points.get(j + 1);
+                            add = true;
+                            break;
+                        }
                     }
                 }
-            }
 
-            if (add) {
-                points.get(index).nrLots++;
-                points.add(index + 2, end);
-            }
+                if (add) {
+                    points.remove(start);
+                    points.remove(end);
+                    points.get(index).nrLots++;
+                    points.add(index + 2, end);
+                }
 
-            organiseDrops();
+                organiseDrops();
 
-            System.out.println(points.size());
-            for (int k = 0; k < points.size(); k++) {
-                System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
+                System.out.println(points.size());
+                for (int k = 0; k < points.size(); k++) {
+                    System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
+                }
+                System.out.println();
             }
-            System.out.println();
         }
 
     }
@@ -513,7 +517,7 @@ public class AGVAgent extends Agent implements Drawable {
      */
     protected boolean equalPoints(Point p1, Point p2){
         if(p1.x == p2.x){
-            if(p1.y == p1.y){
+            if(p1.y == p2.y){
                 if(p1.type.equals(p2.type))
                     return true;
             }

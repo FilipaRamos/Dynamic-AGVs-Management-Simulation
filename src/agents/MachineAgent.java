@@ -261,6 +261,8 @@ public class MachineAgent extends Agent implements Drawable{
             // if there are lots to process
             if(lotsProducing > 0 && !lotProduced) {
 
+                report();
+
                 try {
                     image = ImageIO.read(new File("src/red.png"));
                 } catch (IOException e) {
