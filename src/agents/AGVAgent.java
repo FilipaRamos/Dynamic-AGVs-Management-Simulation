@@ -13,14 +13,13 @@ import sajas.proto.ContractNetResponder;
 import uchicago.src.sim.gui.Drawable;
 import uchicago.src.sim.gui.SimGraphics;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
+
+import static model.AGVSajasModel.images;
 
 /**
  * Created by danie on 03/12/2016.
@@ -34,7 +33,6 @@ public class AGVAgent extends Agent implements Drawable {
     private int currentCapacity;
     private int power;
     private int initialPower;
-    private Image image;
     private int tick = 50;
 
     // PowerStation Coordinates
@@ -43,7 +41,7 @@ public class AGVAgent extends Agent implements Drawable {
 
     // queue of requests
     private Queue<String> requests = new LinkedList<String>();
-    private Queue<String> modifiedRequests = new LinkedList<>();
+    private ArrayList<String> statistics = new ArrayList<>();
     // location of the machines
     private ArrayList<MachineLocation> machinesLocations;
     // list of points to visit
@@ -58,9 +56,10 @@ public class AGVAgent extends Agent implements Drawable {
     private Point[] currentPath;
 
     private static int IDNumber = 0;
-    private int ID;
+    private final int ID;
 
     private Point powerStation;
+    private BufferedImage bi;
 
     /**
      * Constructor of an AGV agent
@@ -78,13 +77,7 @@ public class AGVAgent extends Agent implements Drawable {
         initialPower = power;
         this.powerX = powerX;
         this.powerY = powerY;
-        powerStation = new Point(powerX, powerY, "power");
-
-        try {
-            image = ImageIO.read(new File("src/pepe.jpg"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        powerStation = new Point(powerX, powerY, "power", 0);
         IDNumber++;
         ID = IDNumber;
 
@@ -95,19 +88,6 @@ public class AGVAgent extends Agent implements Drawable {
         points = new ArrayList<>();
         dropPoints = new ArrayList<>();
         pickupPoints = new ArrayList<>();
-    }
-
-    /**
-     * Set the move vector
-     */
-    public AGVAgent(int power){
-        this.maxCapacity=3;
-        this.currentCapacity=0;
-        this.x=-1;
-        this.y=-1;
-        this.power=power;
-        IDNumber++;
-        ID = IDNumber;
     }
 
     /**
@@ -376,7 +356,11 @@ public class AGVAgent extends Agent implements Drawable {
             if(points.size() > 0) {
                 distFinalCargo = calculateDistance(points.get(points.size() - 1).x, points.get(points.size() - 1).y,
                         getPoint(start, "pickup").x, getPoint(start, "pickup").y);
-                nrPowers = Collections.frequency(points, powerStation);
+                if(power == initialPower){
+                    nrPowers = 0;
+                }else{
+                    nrPowers = initialPower*power;
+                }
                 totalDist = calculateTotalDistance(points);
             }else{
                 distFinalCargo = calculateDistance(x, y,
@@ -402,19 +386,20 @@ public class AGVAgent extends Agent implements Drawable {
                 postRequests();
 
             if(points.size() > 0) {
-                //sortPoints();
                 if(tick == 0){
+                    if(getCurrentCapacity() < maxCapacity)
+                        sortPoints();
                     // it's at the destination
                     if(x == points.get(0).x && y == points.get(0).y){
                         // it's a delivery point
                         if(points.get(0).type.equals("drop")){
                             if(request(points.get(0), "drop"))
-                                currentCapacity--;
+                                currentCapacity -= points.get(0).nrLots;
                         }
                         //it's a pickup location
                         else if(points.get(0).type.equals("pickup")){
                             if(request(points.get(0), "pickup"))
-                                currentCapacity++;
+                                currentCapacity += points.get(0).nrLots;
                         }
                         // it's the power station
                         else if(points.get(0).type.equals("power")){
@@ -423,58 +408,172 @@ public class AGVAgent extends Agent implements Drawable {
                         }
                         points.remove(0);
                     }
-                    // if the agv is out of energy, add the path to the powerStation to the first place on the list
-                    if(evaluateEnergy()){
-                        updatePoints();
+                    if(!charging) {
+                        // if the agv is out of energy, add the path to the powerStation to the first place on the list
+                        if (evaluateEnergy()) {
+                            updatePoints();
+                        }
                     }
                     if(points.size() > 0) {
                         if(!charging) {
                             // update coordinates on the movement to the next destination
                             updateCoordinates(points.get(0));
+                            power--;
                         }
                     }
                 }
             }
 
             if(charging){
-                tick = 500;
-                power = initialPower;
-                charging = false;
+                tick = initialPower;
+                tick--;
+                if(power == initialPower) {
+                    charging = false;
+                    tick = 50;
+                }
+                if(charging)
+                    power++;
             }else {
-                if (tick > 0)
+                if (tick > 0) {
                     tick--;
+                }
                 else
                     tick = 50;
             }
         }
     }
 
+    /**
+     * Sort the points to visit in order to make the path ore efficient
+     */
     protected void sortPoints(){
 
-        double distanceCurrent = calculateDistance(x, y, points.get(0).x, points.get(0).y);
-        int j;
+        System.out.println("START! " + points.size());
+        for(int k = 0; k < points.size(); k++){
+            System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ") [" + points.get(k).type + "]");
+        }
+        System.out.println();
+
+        Point p = null;
+        int index = 0;
+
+        for(int i = 0; i < points.size(); i++) {
+            if (points.get(i).type.equals("pickup")) {
+                p = points.get(i);
+                index = i;
+                break;
+            }
+        }
+
+        if(p != null) {
+            if ((currentCapacity + points.get(index).nrLots) < maxCapacity) {
+
+                Point start = null;
+                Point end = null;
+                boolean add = false;
+                if (index < (points.size() - 1)) {
+                    for (int j = (index + 1); j < points.size(); j++) {
+                        if (equalPoints(points.get(j), p)) {
+                            start = points.get(j);
+                            end = points.get(j + 1);
+                            add = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (add) {
+                    points.remove(start);
+                    points.remove(end);
+                    points.get(index).nrLots++;
+                    points.add(index + 2, end);
+                }
+
+                organiseDrops();
+
+                System.out.println(points.size());
+                for (int k = 0; k < points.size(); k++) {
+                    System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
+                }
+                System.out.println();
+            }
+        }
+
+    }
+
+    protected void organiseDrops(){
 
         for(int i = 0; i < points.size(); i++){
-            if(i != 0)
-                distanceCurrent = calculateDistance(points.get(i-1).x, points.get(i-1).y, points.get(i).x, points.get(i).y);
-            j = i;
-            while(distanceCurrent < power){
-                j++;
-                distanceCurrent += calculateDistance(points.get(j-1).x, points.get(j-1).y, points.get(j).x, points.get(j).y)
-                        + calculateDistance(points.get(j).x, points.get(j).y, powerX, powerY);
 
-            }
-            if(distanceCurrent >= power){
-                points.add(j, powerStation);
-                i = j+1;
+        }
+
+    }
+
+    /**
+     * Compares 2 points
+     * @param p1
+     * @param p2
+     * @return
+     */
+    protected boolean equalPoints(Point p1, Point p2){
+        if(p1.x == p2.x){
+            if(p1.y == p2.y){
+                if(p1.type.equals(p2.type))
+                    return true;
             }
         }
 
-        System.out.println();
-        for(int k = 0; k < points.size(); k++){
-            System.out.print("->" + points.get(k));
+        return false;
+    }
+
+    /**
+     * Returns the size of the array after the index
+     * @param index from which to count
+     * @param points arraylist to count
+     * @return number of elements
+     */
+    protected ArrayList<Point> trimArray(int index, ArrayList<Point> points){
+
+        ArrayList<Point> result = new ArrayList<>();
+
+        for(int i = index; i < points.size(); i++){
+            result.add(points.get(i));
         }
 
+        return result;
+
+    }
+
+    protected boolean simulateOrder(ArrayList<Point> pointsTemp, Point p, int index){
+        pointsTemp.add(index, p);
+        System.out.println("INSIDE SIMULATE ORDER");
+        if(calculateCargo(pointsTemp) == -1)
+            return false;
+        if(calculateCargo(pointsTemp) > maxCapacity)
+            return false;
+        return true;
+    }
+
+    /**
+     * Calculates the total cargo of the current points arranjment
+     * @param pointsArray
+     * @return the number of lots
+     */
+    protected int calculateCargo(ArrayList<Point> pointsArray){
+        int cargo = 0;
+
+        for(int i = 0; i < pointsArray.size(); i++){
+            if(pointsArray.get(i).type.equals("pickup"))
+                cargo++;
+            else if(pointsArray.get(i).equals("drop"))
+                cargo--;
+            if(cargo > maxCapacity)
+                return -1;
+        }
+
+        System.out.println("CALCULATE CARGO:" + cargo);
+
+        return cargo;
     }
 
     /**
@@ -488,7 +587,9 @@ public class AGVAgent extends Agent implements Drawable {
             // pass requests to arraylist of points
             String[] splitted = requests.poll().split("&");
             Point pickup = getPoint(splitted[0], "pickup");
+            pickup.nrLots = 1;
             Point drop = getPoint(splitted[1], "drop");
+            drop.nrLots = 1;
             points.add(pickup);
             points.add(drop);
         }
@@ -521,7 +622,7 @@ public class AGVAgent extends Agent implements Drawable {
 
         for(int i = 0; i < machinesLocations.size(); i++){
             if(machinesLocations.get(i).aid.toString().equals(AID)){
-                p = new Point(machinesLocations.get(i).x, machinesLocations.get(i).y, type);
+                p = new Point(machinesLocations.get(i).x, machinesLocations.get(i).y, type, 1);
             }
         }
 
@@ -541,8 +642,6 @@ public class AGVAgent extends Agent implements Drawable {
             y--;
         else if (y < p.y)
             y++;
-
-        power--;
     }
 
     /**
@@ -557,12 +656,12 @@ public class AGVAgent extends Agent implements Drawable {
 
         if(toSend != null) {
             ACLMessage request = new ACLMessage(ACLMessage.REQUEST);
-            request.setContent(type);
+            request.setContent(type + "&" + p.nrLots);
             request.addReceiver(toSend);
 
             send(request);
 
-            System.out.println("AGV requesting " + type + " from " + getPointAID(p));
+            System.out.println("AGV " + getLocalName() + " requesting " + type + " from " + getPointAID(p) + " with " + p.nrLots + " lots.");
 
             return true;
 
@@ -655,22 +754,31 @@ public class AGVAgent extends Agent implements Drawable {
         public int x;
         public int y;
         public String type;
+        public int nrLots;
 
-        public Point(int x, int y, String type){
+        public Point(int x, int y, String type, int nrLots){
             this.x = x;
             this.y = y;
             this.type = type;
+            this.nrLots = nrLots;
         }
 
     }
 
     public void addRequest(String request){
         requests.add(request);
+        statistics.add(request);
     }
 
     @Override
     public void draw(SimGraphics G) {
-        G.drawImageToFit(image);
+        G.drawImageToFit(images.getImage(initialPower,power,maxCapacity,currentCapacity));
+        bi = new BufferedImage(250,250,BufferedImage.TRANSLUCENT);
+        Graphics f1 = bi.getGraphics();
+        f1.setFont(new Font("TimesRoman",Font.BOLD,150));
+        f1.setColor(Color.red);
+        f1.drawString(this.getID()+"",90,150);
+        G.drawImageToFit(bi);
     }
 
     @Override
@@ -697,6 +805,10 @@ public class AGVAgent extends Agent implements Drawable {
 
     public void setPower(int power) {
         this.power = power;
+    }
+
+    public int getPointsSize(){
+        return points.size();
     }
 
     /**
@@ -749,4 +861,7 @@ public class AGVAgent extends Agent implements Drawable {
         this.maxCapacity = maxCapacity;
     }
 
+    public ArrayList<String> getStatistics() {
+        return statistics;
+    }
 }
