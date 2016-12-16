@@ -140,6 +140,7 @@ public class AGVAgent extends Agent implements Drawable {
      */
     protected void search(){
 
+
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription sd = new ServiceDescription();
         sd.setType("machine-" + "/\\[[0-9]+\\]/");
@@ -448,12 +449,6 @@ public class AGVAgent extends Agent implements Drawable {
      */
     protected void sortPoints(){
 
-        System.out.println("START! " + points.size());
-        for(int k = 0; k < points.size(); k++){
-            System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ") [" + points.get(k).type + "]");
-        }
-        System.out.println();
-
         Point p = null;
         int index = 0;
 
@@ -489,22 +484,7 @@ public class AGVAgent extends Agent implements Drawable {
                     points.add(index + 2, end);
                 }
 
-                organiseDrops();
-
-                System.out.println(points.size());
-                for (int k = 0; k < points.size(); k++) {
-                    System.out.print("-> (" + points.get(k).x + ", " + points.get(k).y + ")");
-                }
-                System.out.println();
             }
-        }
-
-    }
-
-    protected void organiseDrops(){
-
-        for(int i = 0; i < points.size(); i++){
-
         }
 
     }

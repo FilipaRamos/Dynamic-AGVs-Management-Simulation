@@ -601,7 +601,7 @@ public class MachineAgent extends Agent implements Drawable{
         if(lotsProducing > 0)
             potential = 1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity);
         else
-            potential = capacity*velocity*(1/((double)1/(double)(capacity-lotsProducing))*((double)1/(double)velocity));
+            potential = capacity*velocity;
     }
 
     /**

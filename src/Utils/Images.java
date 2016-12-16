@@ -29,7 +29,6 @@ public class Images {
     public Image getImage(int initialPower,int power,int maxCapacity, int currentCapacity) {
         int bat = power*5/initialPower;
         int cap = currentCapacity*8/maxCapacity;
-        System.out.println("MERDA: "+currentCapacity);
         if(bat == 0)
             bat=1;
         cap++;
