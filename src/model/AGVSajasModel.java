@@ -12,14 +12,14 @@ import sajas.core.Runtime;
 import sajas.sim.repast3.Repast3Launcher;
 import sajas.wrapper.ContainerController;
 import spaces.Space;
+import uchicago.src.sim.analysis.DataSource;
+import uchicago.src.sim.analysis.OpenSequenceGraph;
+import uchicago.src.sim.analysis.Sequence;
 import uchicago.src.sim.engine.BasicAction;
 import uchicago.src.sim.engine.Schedule;
 import uchicago.src.sim.engine.SimInit;
 import uchicago.src.sim.gui.DisplaySurface;
 import uchicago.src.sim.gui.Object2DDisplay;
-import uchicago.src.sim.analysis.DataSource;
-import uchicago.src.sim.analysis.OpenSequenceGraph;
-import uchicago.src.sim.analysis.Sequence;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
@@ -84,9 +84,7 @@ public class AGVSajasModel extends Repast3Launcher {
 
 	}
 
-
 	private Parser parser;
-
 
 	private ContainerController mainContainer;
 	private ContainerController agentsContainer;
@@ -102,7 +100,7 @@ public class AGVSajasModel extends Repast3Launcher {
 	private boolean Show_num_requests_per_agv = SHOW_NUM_REQUESTS_PER_AGV;
 
 	private boolean runInBatchMode;
-	
+
 	public AGVSajasModel(boolean runInBatchMode) {
 		super();
 		try {
@@ -122,8 +120,6 @@ public class AGVSajasModel extends Repast3Launcher {
 		this.runInBatchMode = runInBatchMode;
 	}
 
-
-
 	//Variáveis que defini e que são necessárias!
 	@Override
 	public String[] getInitParam() {
@@ -137,18 +133,18 @@ public class AGVSajasModel extends Repast3Launcher {
 
 	@Override
 	protected void launchJADE() {
-		
+
 		Runtime rt = Runtime.instance();
 		Profile p1 = new ProfileImpl();
 		mainContainer = rt.createMainContainer(p1);
-		
+
 		if(separate_containers) {
 			Profile p2 = new ProfileImpl();
 			agentsContainer = rt.createAgentContainer(p2);
 		} else {
 			agentsContainer = mainContainer;
 		}
-		
+
 		launchAgents();
 	}
 
@@ -302,7 +298,7 @@ public class AGVSajasModel extends Repast3Launcher {
 		Object2DDisplay displayAGV= new Object2DDisplay(space.getCurrentAGVSpace());
 		displayAGV.setObjectList(agvAgents);
 
-        Object2DDisplay displayMachines= new Object2DDisplay(space.getCurrentMachineSpace());
+		Object2DDisplay displayMachines= new Object2DDisplay(space.getCurrentMachineSpace());
 		displayMachines.setObjectList(machineAgents);
 
 		displaySurf.addDisplayable(displayBackground,"Background");
